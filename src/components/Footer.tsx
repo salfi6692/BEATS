@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, Phone, Mail, FileText, ExternalLink, ArrowUpRight, Eye, Shield, Award } from 'lucide-react';
+import { MapPin, Phone, Mail, FileText, ExternalLink, ArrowUpRight, Eye, Download } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 interface FooterProps {
   onOpenProspectus: () => void;
@@ -12,6 +13,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAdmission,
   onNavigateSection
 }) => {
+  const { settings } = useSettings();
   const [viewCount, setViewCount] = useState<number>(14258);
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="lg:col-span-4 space-y-5">
             <div className="flex items-center gap-3">
               <img
-                src="https://beats.com.pk/wp-content/uploads/2023/04/beats-bahria-logo-300x112-1.webp"
-                alt="Bahria Education and Training System"
+                src={settings.logoUrl}
+                alt={settings.siteTitle}
                 className="h-14 w-auto object-contain bg-white/5 p-1.5 rounded-lg border border-slate-800"
               />
             </div>
@@ -48,15 +50,22 @@ export const Footer: React.FC<FooterProps> = ({
               &ldquo;To provide quality and affordable education for equipping the beneficiaries with knowledge and skills for self-sustainability and socio-economic growth.&rdquo;
             </p>
 
+            <p className="text-xs text-slate-400">
+              {settings.footerDescription}
+            </p>
+
+            {/* Direct Prospectus Link */}
             <div className="pt-2">
-              <button
-                onClick={onOpenProspectus}
+              <a
+                href={settings.prospectusUrl || '#'}
+                target="_blank"
+                rel="noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 shadow-md transition-all cursor-pointer"
               >
-                <FileText className="w-4 h-4" />
+                <Download className="w-4 h-4" />
                 <span>Download Official Prospectus</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
-              </button>
+              </a>
             </div>
 
             {/* Social Links */}
@@ -105,52 +114,62 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
           </div>
 
-          {/* Col 2: Quick Links */}
+          {/* Col 2: Quick Links (Respects visibility) */}
           <div className="lg:col-span-2 space-y-4">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-slate-800">
               Quick Links
             </h4>
             <ul className="space-y-2.5 text-xs text-slate-400">
-              <li>
-                <button
-                  onClick={() => onNavigateSection('about')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer"
-                >
-                  About BEATS
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('academics')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer"
-                >
-                  Academic Streams
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('achievements')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer"
-                >
-                  Academic Achievements
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('campuses')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer"
-                >
-                  Campuses Network
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigateSection('gallery')}
-                  className="hover:text-amber-400 transition-colors cursor-pointer"
-                >
-                  Campus Life &amp; Gallery
-                </button>
-              </li>
+              {settings.sections.aboutOverview && (
+                <li>
+                  <button
+                    onClick={() => onNavigateSection('about')}
+                    className="hover:text-amber-400 transition-colors cursor-pointer"
+                  >
+                    About BEATS
+                  </button>
+                </li>
+              )}
+              {settings.sections.academicStreams && (
+                <li>
+                  <button
+                    onClick={() => onNavigateSection('academics')}
+                    className="hover:text-amber-400 transition-colors cursor-pointer"
+                  >
+                    Academic Streams
+                  </button>
+                </li>
+              )}
+              {settings.sections.achievements && (
+                <li>
+                  <button
+                    onClick={() => onNavigateSection('achievements')}
+                    className="hover:text-amber-400 transition-colors cursor-pointer"
+                  >
+                    Academic Achievements
+                  </button>
+                </li>
+              )}
+              {settings.sections.regionalDirectory && (
+                <li>
+                  <button
+                    onClick={() => onNavigateSection('campuses')}
+                    className="hover:text-amber-400 transition-colors cursor-pointer"
+                  >
+                    Campuses Network
+                  </button>
+                </li>
+              )}
+              {settings.sections.campusGallery && (
+                <li>
+                  <button
+                    onClick={() => onNavigateSection('gallery')}
+                    className="hover:text-amber-400 transition-colors cursor-pointer"
+                  >
+                    Campus Life &amp; Gallery
+                  </button>
+                </li>
+              )}
               <li>
                 <button
                   onClick={onOpenAdmission}
@@ -237,7 +256,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-white block font-medium">Head Office:</strong>
-                  <span>Japan Road, Near Ibadat University, Sihala, Islamabad</span>
+                  <span>{settings.footerAddress}</span>
                 </div>
               </div>
 
@@ -246,9 +265,8 @@ export const Footer: React.FC<FooterProps> = ({
                 <div>
                   <strong className="text-white block font-medium">Helpline Telephones:</strong>
                   <div className="flex flex-wrap gap-x-3 gap-y-1">
-                    <a href="tel:+92518153585" className="hover:text-white">+92-51-8153585</a>
+                    <a href={`tel:${settings.admissionPhone}`} className="hover:text-white">{settings.admissionPhone}</a>
                     <a href="tel:+92518153584" className="hover:text-white">+92-51-8153584</a>
-                    <a href="tel:+92518153588" className="hover:text-white">+92-51-8153588</a>
                   </div>
                 </div>
               </div>
@@ -256,9 +274,9 @@ export const Footer: React.FC<FooterProps> = ({
               <div className="flex items-start gap-2.5">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-white block font-medium">Official Inquiries:</strong>
-                  <a href="mailto:beats@bahriafoundation.com" className="hover:text-white break-all">
-                    beats@bahriafoundation.com
+                  <strong className="text-white block font-medium">Directorate Email:</strong>
+                  <a href={`mailto:${settings.admissionEmail}`} className="hover:text-white block">
+                    {settings.admissionEmail}
                   </a>
                 </div>
               </div>
@@ -269,15 +287,26 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom Bar with Visitor Counter & Copyright */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div>
-            © <strong>Bahria Education And Training System 2025</strong>. All Rights Reserved.
+          <div className="flex items-center flex-wrap gap-3">
+            <span>© <strong>Bahria Education And Training System 2026</strong>. All Rights Reserved.</span>
+            <span>•</span>
+            <a
+              href="/admin"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.hash = '#/admin';
+                window.dispatchEvent(new HashChangeEvent('hashchange'));
+              }}
+              className="text-slate-400 hover:text-amber-400 transition-colors font-medium underline"
+            >
+              BEATS Admin Portal
+            </a>
           </div>
 
           {/* Working View Counter from Original Script */}
-          <div className="flex items-center gap-2 bg-slate-900 px-3.5 py-1.5 rounded-full border border-slate-800 text-slate-400">
+          <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full text-slate-400">
             <Eye className="w-3.5 h-3.5 text-amber-400" />
-            <span>Total Official Portal Views:</span>
-            <span className="font-mono font-bold text-amber-400">{viewCount.toLocaleString()}</span>
+            <span>Portal Visitors: <strong className="text-white font-mono">{viewCount.toLocaleString()}</strong></span>
           </div>
         </div>
 

@@ -1,52 +1,134 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React, { useState } from 'react';
-import { Menu, X, ChevronDown, PhoneCall, Sparkles, GraduationCap, MapPin, Download, BookOpen } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Menu, 
+  X, 
+  ChevronDown, 
+  Sparkles, 
+  GraduationCap, 
+  MapPin, 
+  Download, 
+  Shield, 
+  BookOpen, 
+  Building2, 
+  UserCheck, 
+  Award, 
+  Phone,
+  ArrowUpRight
+} from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 interface NavbarProps {
   onOpenAdmissionModal: () => void;
   onOpenProspectusModal: () => void;
   onOpenLeadershipModal: (id: 'md' | 'dmd') => void;
   onNavigateSection: (sectionId: string) => void;
+  onOpenAdmin?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdmissionModal,
   onOpenProspectusModal,
   onOpenLeadershipModal,
-  onNavigateSection
+  onNavigateSection,
+  onOpenAdmin
 }) => {
+  const { settings } = useSettings();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
-  const [academicsDropdownOpen, setAcademicsDropdownOpen] = useState(false);
-  const [campusesDropdownOpen, setCampusesDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [hoveredNav, setHoveredNav] = useState<string | null>(null);
 
   const handleNavClick = (sectionId: string) => {
     setMobileMenuOpen(false);
-    setAboutDropdownOpen(false);
-    setAcademicsDropdownOpen(false);
-    setCampusesDropdownOpen(false);
+    setActiveDropdown(null);
     onNavigateSection(sectionId);
   };
 
+  const navLinks = [
+    { id: 'home', label: 'Home', section: 'hero' },
+    { 
+      id: 'about', 
+      label: 'About', 
+      section: 'about',
+      hasDropdown: true,
+      items: [
+        { label: 'Introduction & History (1998)', section: 'about' },
+        { label: 'Vision, Mission & Objectives', section: 'about' },
+        { label: 'BEATS Committee & Structure', section: 'about' },
+        { label: 'Institutional Footprint (BFEIs)', section: 'bfeis' },
+        { label: 'Campuses Network (North, Centre, South)', section: 'campuses' },
+      ]
+    },
+    { id: 'md-message', label: "MD's Message", action: () => onOpenLeadershipModal('md') },
+    { 
+      id: 'admission', 
+      label: 'Admission', 
+      section: 'admission',
+      hasDropdown: true,
+      items: [
+        { label: 'Admission Procedure', action: onOpenAdmissionModal },
+        { label: 'Fees Policy & Structure', section: 'streams' },
+        { label: 'Download Prospectus (PDF)', action: onOpenProspectusModal },
+        { label: 'Online Application Portal', action: onOpenAdmissionModal },
+      ]
+    },
+    { 
+      id: 'academics', 
+      label: 'Academics', 
+      section: 'academics',
+      hasDropdown: true,
+      items: [
+        { label: 'Montessori & Primary Section', section: 'academics' },
+        { label: 'Secondary (SSC) & HSSC College', section: 'academics' },
+        { label: 'Cambridge O Level (CAIE)', section: 'academics' },
+        { label: 'Academic Session & Promotion Policy', section: 'academics' },
+        { label: 'Religious & Moral Education', section: 'academics' },
+        { label: 'BISE Board Honors & Results (94%)', section: 'achievements' },
+      ]
+    },
+    { 
+      id: 'campus-life', 
+      label: 'Campus Life', 
+      section: 'gallery',
+      hasDropdown: true,
+      items: [
+        { label: 'Facilities & Science Resources', section: 'gallery' },
+        { label: 'Learning Environment & Houses', section: 'gallery' },
+        { label: 'Activities & Sports Competitions', section: 'gallery' },
+        { label: 'Photo & Event Gallery', section: 'gallery' },
+        { label: 'Timing, Vacations & Uniform', section: 'gallery' },
+      ]
+    },
+    { id: 'campuses', label: 'Campuses', section: 'campuses' },
+    { id: 'scholarship', label: 'Scholarship', section: 'achievements' },
+    { id: 'contact', label: 'Contact Us', section: 'contact' },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs transition-all">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          {/* Logo Brand with Official Crest */}
+          
+          {/* Logo Brand with Official Bahria Crest */}
           <a
             href="#"
             onClick={(e) => {
               e.preventDefault();
               handleNavClick('hero');
             }}
-            className="flex items-center gap-3 group focus:outline-hidden"
+            className="flex items-center gap-3 group focus:outline-hidden shrink-0"
           >
             <div className="relative flex items-center justify-center">
               <img
-                src="https://beats.com.pk/wp-content/uploads/2023/04/beats-bahria-logo-300x112-1.webp"
-                alt="Bahria Education & Training System"
-                className="h-12 sm:h-14 w-auto object-contain transition-transform group-hover:scale-102"
+                src={settings.logoUrl}
+                alt={settings.siteTitle}
+                className="h-12 sm:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-102"
                 onError={(e) => {
-                  // graceful fallback in case of connection drop
                   const target = e.currentTarget;
                   target.style.display = 'none';
                   const fallback = target.parentElement?.querySelector('.logo-fallback') as HTMLElement;
@@ -54,7 +136,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
               />
               <div className="logo-fallback hidden items-center gap-2">
-                <div className="w-11 h-11 rounded-lg bg-navy-900 bg-gradient-to-br from-blue-900 to-slate-900 text-amber-400 font-bold flex items-center justify-center text-xl shadow-md border border-amber-500/30">
+                <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#0B1E3F] to-slate-950 text-amber-400 font-bold flex items-center justify-center text-xl shadow-md border border-amber-500/30">
                   ⚓
                 </div>
                 <div>
@@ -65,228 +147,152 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </a>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden xl:flex items-center space-x-1 lg:space-x-1.5 text-sm font-medium text-slate-700">
-            <button
-              onClick={() => handleNavClick('hero')}
-              className="px-3 py-2 rounded-lg hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              Home
-            </button>
+          {/* Desktop Navigation with Animated Navy Hover Background */}
+          <nav 
+            className="hidden xl:flex items-center space-x-1 text-sm font-semibold text-slate-700"
+            onMouseLeave={() => {
+              setHoveredNav(null);
+              setActiveDropdown(null);
+            }}
+          >
+            {navLinks.map((link) => {
+              const isHovered = hoveredNav === link.id;
+              const isDropdownOpen = activeDropdown === link.id;
 
-            {/* About Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setAboutDropdownOpen(true)}
-              onMouseLeave={() => setAboutDropdownOpen(false)}
-            >
-              <button
-                onClick={() => handleNavClick('about')}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <span>About Us</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${aboutDropdownOpen ? 'rotate-180 text-blue-800' : 'text-slate-400'}`} />
-              </button>
+              return (
+                <div 
+                  key={link.id} 
+                  className="relative"
+                  onMouseEnter={() => {
+                    setHoveredNav(link.id);
+                    if (link.hasDropdown) {
+                      setActiveDropdown(link.id);
+                    } else {
+                      setActiveDropdown(null);
+                    }
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      if (link.action) {
+                        link.action();
+                      } else if (link.section) {
+                        handleNavClick(link.section);
+                      }
+                    }}
+                    className={`relative z-10 flex items-center gap-1 px-3.5 py-2 rounded-lg text-xs lg:text-[13px] font-bold transition-colors duration-200 cursor-pointer ${
+                      isHovered || isDropdownOpen ? 'text-amber-300' : 'text-slate-700'
+                    }`}
+                  >
+                    <span>{link.label}</span>
+                    {link.hasDropdown && (
+                      <ChevronDown 
+                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                          isDropdownOpen ? 'rotate-180 text-amber-400' : 'text-slate-400'
+                        }`} 
+                      />
+                    )}
+                  </button>
 
-              {aboutDropdownOpen && (
-                <div className="absolute top-full left-0 w-64 pt-2 z-50">
-                  <div className="bg-white rounded-xl shadow-xl border border-slate-200/90 py-2 divide-y divide-slate-100">
-                    <div className="px-1 py-1">
-                      <button
-                        onClick={() => handleNavClick('about')}
-                        className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-900 rounded-md transition-colors"
+                  {/* Animated Background Navy Pill on Hover */}
+                  {isHovered && (
+                    <motion.div
+                      layoutId="navHoverNavy"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                      className="absolute inset-0 z-0 rounded-lg bg-gradient-to-r from-[#071326] via-[#0B1E3F] to-[#0A1A36] border border-blue-700/60 shadow-md shadow-blue-950/20"
+                    />
+                  )}
+
+                  {/* Modern Dropdown Menu with Animated Navy Hover on Sub-items */}
+                  <AnimatePresence>
+                    {link.hasDropdown && isDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 w-72 pt-2 z-50"
                       >
-                        Introduction &amp; History (1998)
-                      </button>
-                      <button
-                        onClick={() => handleNavClick('about')}
-                        className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-blue-50 hover:text-blue-900 rounded-md transition-colors"
-                      >
-                        Vision, Mission &amp; Objectives
-                      </button>
-                      <button
-                        onClick={() => handleNavClick('bfeis')}
-                        className="w-full text-left px-3 py-2 text-xs text-slate-600 hover:bg-blue-50 hover:text-blue-900 rounded-md transition-colors"
-                      >
-                        Institutional Footprint (BFEIs)
-                      </button>
-                    </div>
-                    <div className="px-1 py-1 bg-slate-50/50">
-                      <button
-                        onClick={() => {
-                          setAboutDropdownOpen(false);
-                          onOpenLeadershipModal('md');
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs text-blue-950 font-medium hover:bg-blue-100/60 rounded-md flex items-center justify-between"
-                      >
-                        <span>MD-BF Message</span>
-                        <span className="text-[10px] bg-blue-900 text-white px-1.5 py-0.5 rounded font-bold">Admiral</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setAboutDropdownOpen(false);
-                          onOpenLeadershipModal('dmd');
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-blue-50 rounded-md flex items-center justify-between"
-                      >
-                        <span>DMD-BEATS Message</span>
-                        <span className="text-[10px] text-slate-500">Directorate</span>
-                      </button>
-                    </div>
-                  </div>
+                        <div className="bg-slate-950/95 backdrop-blur-xl rounded-xl shadow-2xl border border-blue-900/60 p-2 text-slate-200 divide-y divide-slate-800/80">
+                          <div className="space-y-1 pb-1">
+                            {link.items?.map((item, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => {
+                                  setActiveDropdown(null);
+                                  if (item.action) {
+                                    item.action();
+                                  } else if (item.section) {
+                                    handleNavClick(item.section);
+                                  }
+                                }}
+                                className="w-full text-left px-3 py-2 text-xs rounded-lg text-slate-200 hover:text-amber-300 hover:bg-[#0B1E3F] transition-all flex items-center justify-between group cursor-pointer"
+                              >
+                                <span className="font-medium group-hover:translate-x-1 transition-transform">
+                                  {item.label}
+                                </span>
+                                <span className="text-[10px] text-slate-500 group-hover:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  &rarr;
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Quick Message link in About dropdown */}
+                          {link.id === 'about' && (
+                            <div className="pt-2 px-1 flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setActiveDropdown(null);
+                                  onOpenLeadershipModal('md');
+                                }}
+                                className="flex-1 text-center py-1.5 px-2 bg-blue-900/80 hover:bg-blue-800 text-amber-300 text-[11px] font-bold rounded-md transition-colors"
+                              >
+                                MD-BF Message
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setActiveDropdown(null);
+                                  onOpenLeadershipModal('dmd');
+                                }}
+                                className="flex-1 text-center py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-sky-300 text-[11px] font-medium rounded-md transition-colors border border-slate-700"
+                              >
+                                DMD-BEATS
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              )}
-            </div>
-
-            {/* Academics Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setAcademicsDropdownOpen(true)}
-              onMouseLeave={() => setAcademicsDropdownOpen(false)}
-            >
-              <button
-                onClick={() => handleNavClick('academics')}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <span>Academics</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${academicsDropdownOpen ? 'rotate-180 text-blue-800' : 'text-slate-400'}`} />
-              </button>
-
-              {academicsDropdownOpen && (
-                <div className="absolute top-full left-0 w-72 pt-2 z-50">
-                  <div className="bg-white rounded-xl shadow-xl border border-slate-200/90 p-2">
-                    <button
-                      onClick={() => handleNavClick('academics')}
-                      className="w-full text-left p-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
-                    >
-                      <div className="font-semibold text-xs text-slate-800 group-hover:text-blue-900">Montessori &amp; Primary</div>
-                      <div className="text-[11px] text-slate-500">Early childhood &amp; foundational English medium</div>
-                    </button>
-                    <button
-                      onClick={() => handleNavClick('academics')}
-                      className="w-full text-left p-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
-                    >
-                      <div className="font-semibold text-xs text-slate-800 group-hover:text-blue-900">Secondary &amp; HSSC</div>
-                      <div className="text-[11px] text-slate-500">BISE SSC-I/II &amp; Intermediate Pre-Medical / Pre-Engg</div>
-                    </button>
-                    <button
-                      onClick={() => handleNavClick('academics')}
-                      className="w-full text-left p-2.5 rounded-lg hover:bg-purple-50 transition-colors group"
-                    >
-                      <div className="font-semibold text-xs text-purple-900 flex items-center justify-between">
-                        <span>Cambridge O Level</span>
-                        <span className="text-[9px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-bold">CAIE</span>
-                      </div>
-                      <div className="text-[11px] text-slate-500">International General Certificate of Secondary Education</div>
-                    </button>
-                    <div className="border-t border-slate-100 mt-1 pt-1">
-                      <button
-                        onClick={() => handleNavClick('achievements')}
-                        className="w-full text-left p-2 text-xs font-medium text-amber-700 hover:bg-amber-50 rounded-lg flex items-center gap-1.5"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>94% Passing Average &amp; BISE Awards</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Campuses Dropdown */}
-            <div 
-              className="relative"
-              onMouseEnter={() => setCampusesDropdownOpen(true)}
-              onMouseLeave={() => setCampusesDropdownOpen(false)}
-            >
-              <button
-                onClick={() => handleNavClick('campuses')}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <span>Campuses Network</span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${campusesDropdownOpen ? 'rotate-180 text-blue-800' : 'text-slate-400'}`} />
-              </button>
-
-              {campusesDropdownOpen && (
-                <div className="absolute top-full left-0 w-64 pt-2 z-50">
-                  <div className="bg-white rounded-xl shadow-xl border border-slate-200/90 p-2 divide-y divide-slate-100">
-                    <div className="space-y-0.5 pb-1">
-                      <button
-                        onClick={() => handleNavClick('campuses')}
-                        className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 text-slate-800 hover:text-blue-900 rounded-md flex items-center justify-between"
-                      >
-                        <span className="font-semibold">North Region</span>
-                        <span className="text-[11px] text-slate-500">Islamabad (42)</span>
-                      </button>
-                      <button
-                        onClick={() => handleNavClick('campuses')}
-                        className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 text-slate-800 hover:text-blue-900 rounded-md flex items-center justify-between"
-                      >
-                        <span className="font-semibold">Centre Region</span>
-                        <span className="text-[11px] text-slate-500">Lahore (26)</span>
-                      </button>
-                      <button
-                        onClick={() => handleNavClick('campuses')}
-                        className="w-full text-left px-3 py-2 text-xs hover:bg-blue-50 text-slate-800 hover:text-blue-900 rounded-md flex items-center justify-between"
-                      >
-                        <span className="font-semibold">South Region</span>
-                        <span className="text-[11px] text-slate-500">Karachi / Coast (19)</span>
-                      </button>
-                    </div>
-                    <div className="pt-1.5 px-2">
-                      <a
-                        href="https://beats.com.pk/campuses/"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] font-medium text-blue-700 hover:underline flex items-center gap-1"
-                      >
-                        <MapPin className="w-3 h-3" />
-                        <span>View Complete Campus Index &rarr;</span>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => handleNavClick('gallery')}
-              className="px-3 py-2 rounded-lg hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              Campus Life
-            </button>
-
-            <button
-              onClick={() => handleNavClick('why-choose')}
-              className="px-3 py-2 rounded-lg hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              Why BEATS
-            </button>
-
-            <button
-              onClick={() => handleNavClick('contact')}
-              className="px-3 py-2 rounded-lg hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              Contact
-            </button>
+              );
+            })}
           </nav>
 
-          {/* Action CTAs */}
-          <div className="hidden lg:flex items-center gap-3">
-            <button
-              onClick={onOpenProspectusModal}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all border border-slate-200 cursor-pointer"
-              title="Download Prospectus"
+          {/* Right Action Buttons */}
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
+            {/* Download Prospectus Quick Link */}
+            <a
+              href={settings.prospectusUrl || '#'}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 hover:text-blue-950 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all border border-slate-200 cursor-pointer"
+              title="Download Prospectus (PDF)"
             >
-              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <Download className="w-3.5 h-3.5 text-slate-600" />
               <span>Prospectus</span>
-            </button>
+            </a>
 
+            {/* Admission CTA Button */}
             <button
               onClick={onOpenAdmissionModal}
-              className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-900 via-blue-800 to-slate-900 hover:from-blue-800 hover:to-slate-800 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-blue-950/40"
+              className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer transform active:scale-95"
             >
-              <GraduationCap className="w-4 h-4 text-amber-400" />
+              <GraduationCap className="w-4 h-4 text-slate-950" />
               <span>Admissions 2025–26</span>
             </button>
           </div>
@@ -295,101 +301,95 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2 xl:hidden">
             <button
               onClick={onOpenAdmissionModal}
-              className="sm:flex hidden items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-900 rounded-lg"
+              className="sm:flex hidden items-center gap-1 px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 rounded-lg"
             >
               <span>Apply</span>
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-hidden"
+              className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-hidden cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6 text-slate-900" /> : <Menu className="w-6 h-6 text-slate-900" />}
             </button>
           </div>
+
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu with Animated Navy Active Highlights */}
       {mobileMenuOpen && (
-        <div className="xl:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-6 space-y-2 shadow-xl animate-in slide-in-from-top-2 duration-200">
-          <div className="grid grid-cols-2 gap-2 pb-2 border-b border-slate-100">
+        <div className="xl:hidden bg-slate-950 text-white border-b border-slate-800 px-4 pt-4 pb-6 space-y-3 shadow-2xl animate-in slide-in-from-top duration-200">
+          <div className="grid grid-cols-2 gap-2 pb-3 border-b border-slate-800">
             <button
-              onClick={onOpenAdmissionModal}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold text-white bg-blue-900 rounded-lg"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenAdmissionModal();
+              }}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold text-slate-950 bg-amber-400 rounded-lg"
             >
-              <GraduationCap className="w-4 h-4 text-amber-400" />
-              <span>Admissions</span>
+              <GraduationCap className="w-4 h-4 text-slate-950" />
+              <span>Apply Online</span>
             </button>
-            <button
-              onClick={onOpenProspectusModal}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-800 bg-slate-100 border border-slate-200 rounded-lg"
+            <a
+              href={settings.prospectusUrl || '#'}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-slate-200 bg-slate-900 border border-slate-800 rounded-lg"
             >
-              <Download className="w-4 h-4 text-slate-600" />
+              <Download className="w-4 h-4 text-amber-400" />
               <span>Prospectus PDF</span>
-            </button>
+            </a>
           </div>
 
-          <div className="flex flex-col space-y-1 text-sm font-medium text-slate-800 pt-1">
-            <button
-              onClick={() => handleNavClick('hero')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              Home
-            </button>
-            <button
-              onClick={() => handleNavClick('about')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              About BEATS &amp; History
-            </button>
-            <button
-              onClick={() => handleNavClick('bfeis')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              Institutions &amp; Streams (BFEIs)
-            </button>
-            <button
-              onClick={() => handleNavClick('academics')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              Academics &amp; Curriculum
-            </button>
-            <button
-              onClick={() => handleNavClick('achievements')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100 text-amber-800 font-semibold"
-            >
-              Board Achievements &amp; CNS Medals
-            </button>
-            <button
-              onClick={() => handleNavClick('campuses')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              Campuses &amp; Regional Offices
-            </button>
-            <button
-              onClick={() => handleNavClick('gallery')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              Campus Life &amp; Gallery
-            </button>
-            <button
-              onClick={() => handleNavClick('why-choose')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              Why Choose Bahria Foundation
-            </button>
-            <button
-              onClick={() => handleNavClick('contact')}
-              className="text-left px-3 py-2 rounded-lg hover:bg-slate-100"
-            >
-              Regional Contacts &amp; Inquiries
-            </button>
+          <div className="flex flex-col space-y-1 text-sm font-medium text-slate-200 max-h-[60vh] overflow-y-auto">
+            {navLinks.map((link) => (
+              <div key={link.id} className="py-0.5">
+                <button
+                  onClick={() => {
+                    if (link.action) {
+                      setMobileMenuOpen(false);
+                      link.action();
+                    } else if (link.section) {
+                      handleNavClick(link.section);
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg font-bold text-slate-100 hover:text-amber-300 hover:bg-[#0B1E3F] transition-all flex items-center justify-between"
+                >
+                  <span>{link.label}</span>
+                  {link.hasDropdown && <ChevronDown className="w-4 h-4 text-slate-500" />}
+                </button>
+
+                {link.hasDropdown && (
+                  <div className="pl-4 pr-2 py-1 space-y-1">
+                    {link.items?.map((subItem, sIdx) => (
+                      <button
+                        key={sIdx}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          if (subItem.action) {
+                            subItem.action();
+                          } else if (subItem.section) {
+                            handleNavClick(subItem.section);
+                          }
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 text-xs rounded text-slate-300 hover:text-amber-300 hover:bg-blue-950/80 transition-colors"
+                      >
+                        • {subItem.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>UAN: +92-51-8153585</span>
-            <span>Islamabad • Lahore • Karachi</span>
+          {/* Contact Helpline in Mobile Menu */}
+          <div className="pt-2 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+            <span>Admission Helpline:</span>
+            <a href={`tel:${settings.admissionPhone}`} className="text-amber-400 font-bold">
+              {settings.admissionPhone}
+            </a>
           </div>
         </div>
       )}

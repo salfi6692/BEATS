@@ -1,5 +1,6 @@
 import React from 'react';
 import { Target, Compass, BookOpen, Wrench, Users, Handshake, CheckCircle2, ArrowRight } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 interface AboutOverviewProps {
   onOpenProspectus: () => void;
@@ -10,35 +11,37 @@ export const AboutOverview: React.FC<AboutOverviewProps> = ({
   onOpenProspectus,
   onExploreCampuses
 }) => {
+  const { settings } = useSettings();
+
   const pillars = [
     {
       num: '01',
-      title: 'Formal Academic Campuses',
-      desc: 'Preschool, Primary, Secondary (SSC), Higher Secondary (HSSC/College), and Cambridge O-Level curricula.',
+      title: settings.pillar1Title || 'Formal Academic Campuses',
+      desc: settings.pillar1Desc || 'Preschool, Primary, Secondary (SSC), Higher Secondary (HSSC/College), and Cambridge O-Level curricula.',
       icon: BookOpen,
       badge: 'Core Track',
       color: 'border-blue-200 hover:border-blue-400 bg-blue-50/40'
     },
     {
       num: '02',
-      title: 'Vocational & Technical Centers',
-      desc: 'Applied skills, IT training, and market-driven vocational trades preparing young men and women for immediate careers.',
+      title: settings.pillar2Title || 'Vocational & Technical Centers',
+      desc: settings.pillar2Desc || 'Applied skills, IT training, and market-driven vocational trades preparing young men and women for immediate careers.',
       icon: Wrench,
       badge: 'Applied Skills',
       color: 'border-amber-200 hover:border-amber-400 bg-amber-50/40'
     },
     {
       num: '03',
-      title: 'Non-Formal & Adult Education',
-      desc: 'Community-based literacy centers providing basic numeracy and functional reading in rural and coastal settlements.',
+      title: settings.pillar3Title || 'Non-Formal & Adult Education',
+      desc: settings.pillar3Desc || 'Community-based literacy centers providing basic numeracy and functional reading in rural and coastal settlements.',
       icon: Users,
       badge: 'Community Outreach',
       color: 'border-emerald-200 hover:border-emerald-400 bg-emerald-50/40'
     },
     {
       num: '04',
-      title: 'Joint-Venture & Promotional Projects',
-      desc: 'Public-private educational partnerships expanding access in remote areas of Balochistan, Sindh, and Khyber Pakhtunkhwa.',
+      title: settings.pillar4Title || 'Joint-Venture & Promotional Projects',
+      desc: settings.pillar4Desc || 'Public-private educational partnerships expanding access in remote areas of Balochistan, Sindh, and Khyber Pakhtunkhwa.',
       icon: Handshake,
       badge: 'Partnerships',
       color: 'border-indigo-200 hover:border-indigo-400 bg-indigo-50/40'
@@ -53,13 +56,13 @@ export const AboutOverview: React.FC<AboutOverviewProps> = ({
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold uppercase tracking-wider">
             <Compass className="w-3.5 h-3.5 text-blue-800" />
-            <span>Our Foundation &amp; Legacy</span>
+            <span>{settings.aboutBadge || 'Our Foundation & Legacy'}</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
-            A Quarter-Century of Empowering Pakistan Through Education
+            {settings.aboutHeading || 'A Quarter-Century of Empowering Pakistan Through Education'}
           </h2>
           <p className="text-slate-600 text-base leading-relaxed">
-            Established in 1998 by the <strong className="text-slate-900">Bahria Foundation</strong>, BEATS translates naval welfare into lasting social impact, opening doorways of enlightenment for thousands of families across Pakistan.
+            {settings.aboutDescription || 'Established in 1998 by the Bahria Foundation, BEATS translates naval welfare into lasting social impact, opening doorways of enlightenment for thousands of families across Pakistan.'}
           </p>
         </div>
 
@@ -73,10 +76,10 @@ export const AboutOverview: React.FC<AboutOverviewProps> = ({
                 Bahria Education And Training System (BEATS) was established in 1998 following the visionary directive of the Bahria Foundation to spread modern, high-quality educational facilities all over the country—especially in under-developed and remote areas.
               </p>
               <p>
-                From humble beginnings, BEATS has progressed dynamically over the years and is presently operating more than <span className="font-semibold text-blue-900">87 Bahria Foundation Schools &amp; Colleges</span> located all across Pakistan. Today, BEATS proudly caters to the educational needs of approximately <span className="font-semibold text-blue-900">37,000 students</span> in both rural and urban locales.
+                From humble beginnings, BEATS has progressed dynamically over the years and is presently operating more than <span className="font-semibold text-blue-900">{settings.statCampuses || '87+'} Bahria Foundation Schools &amp; Colleges</span> located all across Pakistan. Today, BEATS proudly caters to the educational needs of approximately <span className="font-semibold text-blue-900">{settings.statStudents || '37,000+'} students</span> in both rural and urban locales.
               </p>
               <p>
-                To sustain academic excellence, BEATS also operates its own dedicated <strong className="text-slate-900">Teacher Training Institutes</strong> where faculty members undergo rigorous pedagogical workshops, modern technology integrations, and ethical mentorship.
+                To sustain academic excellence, BEATS also operates its own dedicated <strong className="text-slate-900">Teacher Training Institutes ({settings.statInstitutes || '03 TTIs'})</strong> where faculty members undergo rigorous pedagogical workshops, modern technology integrations, and ethical mentorship.
               </p>
             </div>
 
@@ -128,7 +131,7 @@ export const AboutOverview: React.FC<AboutOverviewProps> = ({
                 <div className="p-4 bg-white border-t border-slate-100 flex items-center justify-between">
                   <div>
                     <div className="text-xs font-bold text-slate-900">Bahria Foundation Network</div>
-                    <div className="text-[11px] text-slate-500">Spread over 87+ locations across Pakistan</div>
+                    <div className="text-[11px] text-slate-500">Spread over {settings.statCampuses || '87+'} locations across Pakistan</div>
                   </div>
                   <button
                     onClick={onExploreCampuses}

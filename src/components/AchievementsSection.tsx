@@ -1,7 +1,10 @@
 import React from 'react';
-import { Award, Trophy, Medal, CheckCircle, Sparkles, Star, Users } from 'lucide-react';
+import { Trophy, Medal, Star } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 export const AchievementsSection: React.FC = () => {
+  const { settings } = useSettings();
+
   return (
     <section id="achievements" className="py-20 bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900 text-white relative overflow-hidden">
       {/* Background accents */}
@@ -19,10 +22,10 @@ export const AchievementsSection: React.FC = () => {
             <span>Honors &amp; Board Excellence</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight font-display">
-            Academic Achievements &amp; CNS Honors
+            {settings.achievementsHeading || 'Academic Achievements & CNS Honors'}
           </h2>
           <p className="text-slate-300 text-base leading-relaxed">
-            Consistently outperforming nationwide benchmarks through dedicated pedagogical training, disciplined focus, and relentless pursuit of excellence.
+            {settings.achievementsSubheading || 'Consistently outperforming nationwide benchmarks through dedicated pedagogical training, disciplined focus, and relentless pursuit of excellence.'}
           </p>
         </div>
 
@@ -57,22 +60,22 @@ export const AchievementsSection: React.FC = () => {
                 </div>
 
                 <h3 className="text-xl sm:text-2xl font-bold text-white leading-snug">
-                  Recognized at the Highest National Level
+                  {settings.cnsAwardTitle || 'Chief of Naval Staff Academic Excellence Award'}
                 </h3>
 
                 <p className="text-slate-300 text-sm sm:text-base leading-relaxed font-light">
-                  The <strong className="text-white font-semibold">Chief of Naval Staff</strong> awarded Certificates of Appreciation, Cash Prizes, and Gold/Silver Medals to the students of Bahria Foundation Colleges (BFCs) who secured top positions in the Grade 10 Annual Examinations conducted by Boards of Intermediate and Secondary Education (BISE).
+                  {settings.cnsAwardDesc || 'The Chief of Naval Staff awarded Certificates of Appreciation, Cash Prizes, and Gold/Silver Medals to the students of Bahria Foundation Colleges (BFCs) who secured top positions in the Grade 10 Annual Examinations conducted by Boards of Intermediate and Secondary Education (BISE).'}
                 </p>
 
                 <p className="text-slate-300 text-sm leading-relaxed font-light">
-                  Results of the centralized formal assessment of Grade 10 students across Pakistan revealed that out of <strong className="text-amber-300 font-semibold">1,607 BFC candidates</strong> appearing in the SSC-II examination, the overall passing average across all 3 regions remained a remarkable <strong className="text-emerald-400 font-bold">94%</strong>.
+                  Results of the centralized formal assessment of Grade 10 students across Pakistan revealed that out of <strong className="text-amber-300 font-semibold">1,607 BFC candidates</strong> appearing in the SSC-II examination, the overall passing average across all 3 regions remained a remarkable <strong className="text-emerald-400 font-bold">{settings.statPassRate || '94%'}</strong>.
                 </p>
               </div>
 
               {/* Stat Highlights Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
                 <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-700 text-left">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-display">94%</div>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-display">{settings.statPassRate || '94%'}</div>
                   <div className="text-xs font-semibold text-slate-300 mt-1">Passing Average</div>
                   <div className="text-[10px] text-slate-400">All 3 regional zones</div>
                 </div>

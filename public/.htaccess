@@ -1,0 +1,33 @@
+# Bahria Education & Training System (BEATS) - Production Apache / cPanel Configuration
+<IfModule mod_dir.c>
+    DirectoryIndex index.html
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType application/javascript .mjs
+    AddType text/css .css
+    AddType image/webp .webp
+    AddType image/svg+xml .svg
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    # If the requested file or directory exists physically, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    # Otherwise fallback to index.html for SPA & hash/admin routing
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Browser Caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+</IfModule>

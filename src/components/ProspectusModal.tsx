@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, FileText, Download, CheckCircle2, Shield, ExternalLink } from 'lucide-react';
+import { X, FileText, Download, CheckCircle2 } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 interface ProspectusModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export const ProspectusModal: React.FC<ProspectusModalProps> = ({
   onClose,
   onOpenAdmission
 }) => {
+  const { settings } = useSettings();
   if (!isOpen) return null;
 
   const prospectusContents = [
@@ -83,7 +85,7 @@ export const ProspectusModal: React.FC<ProspectusModalProps> = ({
 
           <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
             <a
-              href="https://beats.com.pk/wp-content/uploads/2024/12/Final-PROSPECTUS-22-02-2024.pdf"
+              href={settings.prospectusUrl || 'https://beats.com.pk/wp-content/uploads/2024/12/Final-PROSPECTUS-22-02-2024.pdf'}
               target="_blank"
               rel="noreferrer"
               className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 py-3 px-5 rounded-xl font-bold text-xs text-white bg-blue-900 hover:bg-blue-800 shadow-md transition-all"

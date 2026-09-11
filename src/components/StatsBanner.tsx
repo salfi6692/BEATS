@@ -1,11 +1,14 @@
 import React from 'react';
-import { School, Users, Award, History, MapPin, BookCheck } from 'lucide-react';
+import { School, Users, Award, History, BookCheck } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 export const StatsBanner: React.FC = () => {
+  const { settings } = useSettings();
+
   const stats = [
     {
       icon: School,
-      value: '87+',
+      value: settings.statCampuses || '87+',
       label: 'Campuses Nationwide',
       detail: 'Schools & Colleges in all provinces',
       accent: 'text-blue-900',
@@ -13,7 +16,7 @@ export const StatsBanner: React.FC = () => {
     },
     {
       icon: Users,
-      value: '37,000+',
+      value: settings.statStudents || '37,000+',
       label: 'Enrolled Students',
       detail: 'Rural, urban & coastal communities',
       accent: 'text-amber-600',
@@ -21,9 +24,9 @@ export const StatsBanner: React.FC = () => {
     },
     {
       icon: Award,
-      value: '94%',
+      value: settings.statPassRate || '94%',
       label: 'BISE Passing Average',
-      detail: 'Awarded by Chief of Naval Staff',
+      detail: 'Recognized by Chief of Naval Staff',
       accent: 'text-emerald-700',
       bg: 'bg-emerald-50'
     },
@@ -31,15 +34,15 @@ export const StatsBanner: React.FC = () => {
       icon: History,
       value: '1998',
       label: 'Year Established',
-      detail: '25+ Years of Educational Trust',
+      detail: '28+ Years of Educational Trust',
       accent: 'text-indigo-900',
       bg: 'bg-indigo-50'
     },
     {
       icon: BookCheck,
-      value: '100%',
-      label: 'Faculty Training',
-      detail: 'In-house Teacher Training Centers',
+      value: settings.statInstitutes || '03 TTIs',
+      label: 'Teacher Training Centers',
+      detail: 'In-house continuous pedagogy labs',
       accent: 'text-rose-700',
       bg: 'bg-rose-50'
     }

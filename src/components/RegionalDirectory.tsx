@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Printer, ExternalLink, Building2, Search, ArrowRight, Shield } from 'lucide-react';
 import { REGIONAL_OFFICES } from '../data/beatsData';
+import { useSettings } from '../context/SettingsContext';
 
 interface RegionalDirectoryProps {
   onOpenAdmissionModal: (region?: string) => void;
 }
 
 export const RegionalDirectory: React.FC<RegionalDirectoryProps> = ({ onOpenAdmissionModal }) => {
+  const { settings } = useSettings();
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -32,10 +34,10 @@ export const RegionalDirectory: React.FC<RegionalDirectoryProps> = ({ onOpenAdmi
             <span>Pan-Pakistan Institutional Network</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-display">
-            Location Of BFCs Regional Office Director BEATS
+            {settings.directoryHeading || 'Location Of BFCs Regional Office Director BEATS'}
           </h2>
           <p className="text-slate-600 text-base leading-relaxed">
-            Directing educational operations across 87+ campuses through 3 administrative directorates located in Islamabad, Lahore, and Karachi.
+            {settings.directorySubheading || `Directing educational operations across ${settings.statCampuses || '87+'} campuses through 3 administrative directorates located in Islamabad, Lahore, and Karachi.`}
           </p>
         </div>
 
@@ -52,7 +54,7 @@ export const RegionalDirectory: React.FC<RegionalDirectoryProps> = ({ onOpenAdmi
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              All Regions (87+)
+              All Regions ({settings.statCampuses || '87+'})
             </button>
             {REGIONAL_OFFICES.map((off) => (
               <button
@@ -69,148 +71,133 @@ export const RegionalDirectory: React.FC<RegionalDirectoryProps> = ({ onOpenAdmi
             ))}
           </div>
 
-          {/* Search box for city/district */}
+          {/* District search */}
           <div className="relative w-full md:w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search city, district, or campus..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl text-xs border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 transition-all"
+              placeholder="Search city, district, campus..."
+              className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 transition-all text-slate-800 placeholder-slate-400"
             />
           </div>
-
         </div>
 
-        {/* Regional Offices Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Regional Directorate Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {filteredOffices.map((office) => (
             <div
               key={office.id}
-              className="bg-white rounded-3xl border border-slate-200/90 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col justify-between text-left group"
+              className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 p-6 flex flex-col justify-between text-left relative overflow-hidden group"
             >
+              {/* Top Accent Strip */}
+              <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-blue-900 via-blue-700 to-amber-500"></div>
+
               <div>
-                {/* Header Banner */}
-                <div className="p-6 bg-gradient-to-br from-blue-900 to-slate-900 text-white relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Shield className="w-24 h-24 text-white" />
-                  </div>
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider mb-2">
-                    {office.campusesCount} Registered Campuses
+                {/* Header Tag */}
+                <div className="flex items-center justify-between gap-2 mb-4 pt-1">
+                  <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-900 border border-blue-100">
+                    {office.city}
                   </span>
-                  <h3 className="text-xl font-extrabold text-white tracking-tight">
-                    {office.region}
-                  </h3>
-                  <p className="text-xs text-slate-300 mt-0.5 font-light">
-                    {office.title}
-                  </p>
+                  <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200/60">
+                    {office.campusesCount} Campuses
+                  </span>
                 </div>
 
-                {/* Office Contact Details */}
-                <div className="p-6 space-y-4 text-xs">
-                  {/* Address */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
-                      <MapPin className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-900">Regional Secretariat</div>
-                      <div className="text-slate-600 leading-relaxed mt-0.5">{office.address}</div>
-                    </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-1">
+                  {office.region}
+                </h3>
+                <div className="text-xs font-semibold text-blue-900 mb-4 flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{office.title}</span>
+                </div>
+
+                {/* Contact List */}
+                <div className="space-y-3 text-xs text-slate-600 border-t border-slate-100 pt-4 mb-6">
+                  <div className="flex items-start gap-2.5">
+                    <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <span className="leading-relaxed">{office.address}</span>
                   </div>
 
-                  {/* Phones */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
-                      <Phone className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-900">Telephone Lines</div>
-                      <div className="space-y-0.5 mt-0.5">
-                        {office.phones.map((ph, pIdx) => (
-                          <a
-                            key={pIdx}
-                            href={`tel:${ph.replace(/\s+/g, '')}`}
-                            className="block text-slate-600 hover:text-blue-900 font-medium transition-colors"
-                          >
-                            {ph}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Fax if available */}
-                  {office.fax && (
-                    <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-                        <Printer className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-slate-900">Facsimile</div>
-                        <div className="text-slate-600 mt-0.5">{office.fax}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Email */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
-                      <Mail className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-900">Official Directorate Email</div>
-                      <a
-                        href={`mailto:${office.email}`}
-                        className="text-blue-900 hover:underline font-medium break-all"
-                      >
-                        {office.email}
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Prominent District Coverage */}
-                  <div className="pt-2 border-t border-slate-100">
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      Key Districts &amp; Cities Served:
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {office.highlightDistricts.map((d, dIdx) => (
-                        <span
-                          key={dIdx}
-                          className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-medium"
-                        >
-                          {d}
-                        </span>
+                  <div className="flex items-center gap-2.5">
+                    <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                    <div className="flex flex-wrap gap-2">
+                      {office.phones.map((p, idx) => (
+                        <a key={idx} href={`tel:${p}`} className="hover:text-blue-900 font-medium">
+                          {p}
+                        </a>
                       ))}
                     </div>
                   </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                    <a href={`mailto:${office.email}`} className="hover:text-blue-900 font-medium truncate">
+                      {office.email}
+                    </a>
+                  </div>
+
+                  {office.fax && (
+                    <div className="flex items-center gap-2.5 text-slate-400">
+                      <Printer className="w-4 h-4 shrink-0" />
+                      <span>Fax: {office.fax}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Highlight Districts Chips */}
+                <div className="space-y-2 mb-6">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Key Campus Districts Covered:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {office.highlightDistricts.map((district, dIdx) => (
+                      <span
+                        key={dIdx}
+                        className="px-2 py-0.5 rounded-md text-[11px] bg-slate-100 text-slate-700 font-medium"
+                      >
+                        {district}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
-                <a
-                  href={office.branchesLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs font-bold text-blue-900 hover:text-amber-600 flex items-center gap-1 transition-colors"
-                >
-                  <span>View All {office.region} Branches</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                 <button
-                  onClick={() => onOpenAdmissionModal(office.region)}
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white bg-blue-900 hover:bg-blue-800 transition-all cursor-pointer"
+                  onClick={() => onOpenAdmissionModal(office.id)}
+                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-blue-900 hover:bg-blue-800 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                 >
-                  Inquire
+                  <span>Apply in {office.city}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-400" />
                 </button>
               </div>
-
             </div>
           ))}
+        </div>
+
+        {/* Bottom index link note */}
+        <div className="p-6 rounded-2xl bg-blue-950 text-white flex flex-col sm:flex-row items-center justify-between gap-4 text-left border border-blue-900">
+          <div className="space-y-1">
+            <h4 className="font-bold text-base text-white flex items-center gap-2">
+              <span className="text-amber-400">⚓</span>
+              Looking for a specific Bahria Foundation College in your city?
+            </h4>
+            <p className="text-xs text-slate-300">
+              Browse the complete address and telephone directory of all {settings.statCampuses || '87+'} campuses across Pakistan.
+            </p>
+          </div>
+          <a
+            href="https://beats.com.pk/campuses/"
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 shadow-md"
+          >
+            <span>View Complete Campus Index</span>
+            <ExternalLink className="w-4 h-4" />
+          </a>
         </div>
 
       </div>
