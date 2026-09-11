@@ -1,0 +1,6 @@
+{
+  "name": "Bahria Education & Training System",
+  "description": "Official portal for Bahria Education and Training System (BEATS) - Bahria Foundation, offering quality education across 87+ campuses in Pakistan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
