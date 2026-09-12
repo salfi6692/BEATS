@@ -301,6 +301,15 @@ export const Footer: React.FC<FooterProps> = ({
             >
               BEATS Admin Portal
             </a>
+            <span>•</span>
+            <a
+              href="/beats-portal-build.zip"
+              download="beats-portal-build.zip"
+              className="text-amber-400/90 hover:text-amber-300 transition-colors font-semibold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20"
+              title="Download Latest Production Build & Source Archive (.zip)"
+            >
+              <span>Download Latest Build (.zip)</span>
+            </a>
           </div>
 
           {/* Working View Counter from Original Script */}

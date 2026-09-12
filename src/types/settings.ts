@@ -17,6 +17,7 @@ export interface MarqueeItem {
   badge?: string;
   link?: string;
   isUrgent?: boolean;
+  urgent?: boolean;
 }
 
 export interface MarqueeSettings {

@@ -20,6 +20,7 @@ import { AdmissionModal } from './components/AdmissionModal';
 import { ProspectusModal } from './components/ProspectusModal';
 import { LeadershipModal } from './components/LeadershipModal';
 import { AdminPanel } from './components/AdminPanel';
+import { MarqueeTicker } from './components/MarqueeTicker';
 
 function MainPortal() {
   const { settings } = useSettings();
@@ -188,6 +189,15 @@ function MainPortal() {
 
       {/* Main Responsive Sticky Navbar */}
       <Navbar
+        onOpenAdmissionModal={() => handleOpenAdmissionWithRegion()}
+        onOpenProspectusModal={() => setProspectusModalOpen(true)}
+        onOpenLeadershipModal={handleOpenLeadership}
+        onNavigateSection={scrollToSection}
+        onOpenAdmin={navigateToAdmin}
+      />
+
+      {/* Live Updates & Announcements Marquee Ticker (Configured via Admin Panel) */}
+      <MarqueeTicker
         onOpenAdmissionModal={() => handleOpenAdmissionWithRegion()}
         onOpenProspectusModal={() => setProspectusModalOpen(true)}
         onOpenLeadershipModal={handleOpenLeadership}

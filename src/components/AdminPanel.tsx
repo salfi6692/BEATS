@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { convertImageToWebP } from '../utils/imageToWebp';
-import { SlideItem, GalleryPhotoItem, SectionKey } from '../types/settings';
+import { SlideItem, GalleryPhotoItem, SectionKey, MarqueeItem } from '../types/settings';
 import {
   Settings,
   Image as ImageIcon,
@@ -38,7 +38,11 @@ import {
   Award,
   HelpCircle,
   Download,
-  Package
+  Package,
+  Megaphone,
+  Bell,
+  Play,
+  Pause
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -64,10 +68,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
   // Active admin tab
   const [activeTab, setActiveTab] = useState<
-    'general' | 'slider' | 'sections' | 'ordering' | 'gallery' | 'content' | 'appearance' | 'metrics'
+    'general' | 'marquee' | 'slider' | 'sections' | 'ordering' | 'gallery' | 'content' | 'appearance' | 'metrics'
   >('general');
   const [saveToast, setSaveToast] = useState(false);
   const [isConvertingImage, setIsConvertingImage] = useState(false);
+
+  // Marquee item form state
+  const [showAddMarqueeModal, setShowAddMarqueeModal] = useState(false);
+  const [newMarqueeText, setNewMarqueeText] = useState('');
+  const [newMarqueeBadge, setNewMarqueeBadge] = useState('ANNOUNCEMENT');
+  const [newMarqueeLink, setNewMarqueeLink] = useState('');
+  const [newMarqueeUrgent, setNewMarqueeUrgent] = useState(false);
+  const [editingMarqueeId, setEditingMarqueeId] = useState<string | null>(null);
 
   // New slide form state
   const [newSlideImage, setNewSlideImage] = useState('');
@@ -234,6 +246,124 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     newPhotos[targetIdx] = temp;
     updateSettings({ galleryPhotos: newPhotos });
     showNotification();
+  };
+
+  // Marquee Handlers
+  const handleSaveMarqueeItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMarqueeText.trim()) {
+      alert('Announcement text is required');
+      return;
+    }
+    const currentMarquee = settings.marquee || {
+      enabled: true,
+      label: 'LATEST UPDATES',
+      speed: 'normal' as const,
+      theme: 'navy' as const,
+      pauseOnHover: true,
+      items: []
+    };
+
+    let updatedItems: MarqueeItem[];
+
+    if (editingMarqueeId) {
+      updatedItems = (currentMarquee.items || []).map((item) =>
+        item.id === editingMarqueeId
+          ? {
+              ...item,
+              text: newMarqueeText,
+              badge: newMarqueeBadge,
+              link: newMarqueeLink,
+              isUrgent: newMarqueeUrgent,
+              urgent: newMarqueeUrgent
+            }
+          : item
+      );
+    } else {
+      const newItem: MarqueeItem = {
+        id: `marquee-${Date.now()}`,
+        text: newMarqueeText,
+        badge: newMarqueeBadge || 'ANNOUNCEMENT',
+        link: newMarqueeLink,
+        isUrgent: newMarqueeUrgent,
+        urgent: newMarqueeUrgent
+      };
+      updatedItems = [...(currentMarquee.items || []), newItem];
+    }
+
+    updateSettings({
+      marquee: {
+        ...currentMarquee,
+        items: updatedItems
+      }
+    });
+
+    setNewMarqueeText('');
+    setNewMarqueeBadge('ANNOUNCEMENT');
+    setNewMarqueeLink('');
+    setNewMarqueeUrgent(false);
+    setEditingMarqueeId(null);
+    setShowAddMarqueeModal(false);
+    showNotification();
+  };
+
+  const handleDeleteMarqueeItem = (id: string) => {
+    const currentMarquee = settings.marquee;
+    if (!currentMarquee) return;
+    const updated = (currentMarquee.items || []).filter((item) => item.id !== id);
+    updateSettings({
+      marquee: {
+        ...currentMarquee,
+        items: updated
+      }
+    });
+    showNotification();
+  };
+
+  const handleToggleUrgent = (id: string) => {
+    const currentMarquee = settings.marquee;
+    if (!currentMarquee) return;
+    const updated = (currentMarquee.items || []).map((item) => {
+      if (item.id === id) {
+        const val = !(item.isUrgent || item.urgent);
+        return { ...item, isUrgent: val, urgent: val };
+      }
+      return item;
+    });
+    updateSettings({
+      marquee: {
+        ...currentMarquee,
+        items: updated
+      }
+    });
+    showNotification();
+  };
+
+  const handleMoveMarqueeItem = (index: number, direction: 'up' | 'down') => {
+    const currentMarquee = settings.marquee;
+    if (!currentMarquee) return;
+    const items = [...(currentMarquee.items || [])];
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= items.length) return;
+    const temp = items[index];
+    items[index] = items[targetIdx];
+    items[targetIdx] = temp;
+    updateSettings({
+      marquee: {
+        ...currentMarquee,
+        items
+      }
+    });
+    showNotification();
+  };
+
+  const handleEditMarqueeItem = (item: MarqueeItem) => {
+    setEditingMarqueeId(item.id);
+    setNewMarqueeText(item.text);
+    setNewMarqueeBadge(item.badge || 'ANNOUNCEMENT');
+    setNewMarqueeLink(item.link || '');
+    setNewMarqueeUrgent(Boolean(item.isUrgent || item.urgent));
+    setShowAddMarqueeModal(true);
   };
 
   // Section Ordering Handlers
@@ -427,6 +557,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
           >
             <Settings className="w-4 h-4" />
             General &amp; Branding
+          </button>
+
+          <button
+            onClick={() => setActiveTab('marquee')}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'marquee'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <Megaphone className="w-4 h-4" />
+            Marquee &amp; News Ticker ({settings.marquee?.items?.length || 0})
           </button>
 
           <button
@@ -731,6 +873,408 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: Marquee & News Ticker Settings */}
+        {activeTab === 'marquee' && (
+          <div className="space-y-6">
+            {/* Global Marquee Controls Card */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Megaphone className="w-5 h-5 text-amber-400" />
+                    Live Marquee &amp; Information Ticker Controls
+                  </h3>
+                  <p className="text-slate-400 text-sm">
+                    Configure real-time notifications, admissions news, examination results, and official updates scrolling across the portal.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      const current = settings.marquee || {
+                        enabled: true,
+                        label: 'LATEST UPDATES',
+                        speed: 'normal' as const,
+                        theme: 'navy' as const,
+                        pauseOnHover: true,
+                        items: []
+                      };
+                      updateSettings({
+                        marquee: {
+                          ...current,
+                          enabled: !current.enabled
+                        }
+                      });
+                      showNotification();
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                      settings.marquee?.enabled
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                        : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700'
+                    }`}
+                  >
+                    {settings.marquee?.enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    <span>{settings.marquee?.enabled ? 'Marquee Active' : 'Marquee Disabled'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setEditingMarqueeId(null);
+                      setNewMarqueeText('');
+                      setNewMarqueeBadge('ANNOUNCEMENT');
+                      setNewMarqueeLink('');
+                      setNewMarqueeUrgent(false);
+                      setShowAddMarqueeModal(true);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-md shadow-amber-500/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add New Announcement
+                  </button>
+                </div>
+              </div>
+
+              {/* Ticker Configurations Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-800">
+                {/* Ticker Badge Label */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Ticker Badge Label
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.marquee?.label || 'LATEST UPDATES'}
+                    onChange={(e) => {
+                      const current = settings.marquee || {
+                        enabled: true,
+                        label: 'LATEST UPDATES',
+                        speed: 'normal' as const,
+                        theme: 'navy' as const,
+                        pauseOnHover: true,
+                        items: []
+                      };
+                      updateSettings({
+                        marquee: {
+                          ...current,
+                          label: e.target.value
+                        }
+                      });
+                      showNotification();
+                    }}
+                    placeholder="e.g. LATEST UPDATES"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-medium"
+                  />
+                </div>
+
+                {/* Color Theme Selector */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Color Theme
+                  </label>
+                  <select
+                    value={settings.marquee?.theme || 'navy'}
+                    onChange={(e) => {
+                      const current = settings.marquee || {
+                        enabled: true,
+                        label: 'LATEST UPDATES',
+                        speed: 'normal' as const,
+                        theme: 'navy' as const,
+                        pauseOnHover: true,
+                        items: []
+                      };
+                      updateSettings({
+                        marquee: {
+                          ...current,
+                          theme: e.target.value as 'navy' | 'gold' | 'blue' | 'dark'
+                        }
+                      });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-medium cursor-pointer"
+                  >
+                    <option value="navy">Maritime Deep Navy (Default)</option>
+                    <option value="gold">Naval Gold Accent</option>
+                    <option value="blue">Royal Blue</option>
+                    <option value="dark">Slate Carbon Dark</option>
+                  </select>
+                </div>
+
+                {/* Scroll Speed Selector */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Scroll Speed
+                  </label>
+                  <select
+                    value={settings.marquee?.speed || 'normal'}
+                    onChange={(e) => {
+                      const current = settings.marquee || {
+                        enabled: true,
+                        label: 'LATEST UPDATES',
+                        speed: 'normal' as const,
+                        theme: 'navy' as const,
+                        pauseOnHover: true,
+                        items: []
+                      };
+                      updateSettings({
+                        marquee: {
+                          ...current,
+                          speed: e.target.value as 'slow' | 'normal' | 'fast'
+                        }
+                      });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-medium cursor-pointer"
+                  >
+                    <option value="slow">Slow &amp; Relaxed (65s)</option>
+                    <option value="normal">Normal Pace (40s - Recommended)</option>
+                    <option value="fast">Brisk &amp; Fast (24s)</option>
+                  </select>
+                </div>
+
+                {/* Pause on Hover Option */}
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-2 p-2 rounded-lg bg-slate-950 border border-slate-800 cursor-pointer text-xs text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={settings.marquee?.pauseOnHover ?? true}
+                      onChange={(e) => {
+                        const current = settings.marquee || {
+                          enabled: true,
+                          label: 'LATEST UPDATES',
+                          speed: 'normal' as const,
+                          theme: 'navy' as const,
+                          pauseOnHover: true,
+                          items: []
+                        };
+                        updateSettings({
+                          marquee: {
+                            ...current,
+                            pauseOnHover: e.target.checked
+                          }
+                        });
+                        showNotification();
+                      }}
+                      className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-900 border-slate-700"
+                    />
+                    <span>Pause Ticker on Mouse Hover</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Announcement Items Management List */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-amber-400" />
+                  <span>Announcement Items ({settings.marquee?.items?.length || 0})</span>
+                </h4>
+                <span className="text-xs text-slate-400">
+                  Items scroll continuously across the marquee ticker
+                </span>
+              </div>
+
+              {(!settings.marquee?.items || settings.marquee.items.length === 0) ? (
+                <div className="p-8 rounded-xl bg-slate-950 border border-dashed border-slate-800 text-center">
+                  <Megaphone className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                  <p className="text-sm text-slate-400 mb-3">No announcements added yet.</p>
+                  <button
+                    onClick={() => {
+                      setEditingMarqueeId(null);
+                      setNewMarqueeText('');
+                      setNewMarqueeBadge('ANNOUNCEMENT');
+                      setNewMarqueeLink('');
+                      setNewMarqueeUrgent(false);
+                      setShowAddMarqueeModal(true);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer"
+                  >
+                    Add First Announcement
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {settings.marquee.items.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors"
+                    >
+                      <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
+                        {/* Up/Down order controls */}
+                        <div className="flex flex-col gap-0.5 shrink-0">
+                          <button
+                            onClick={() => handleMoveMarqueeItem(idx, 'up')}
+                            disabled={idx === 0}
+                            className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 disabled:opacity-30 cursor-pointer"
+                            title="Move item up"
+                          >
+                            <ArrowUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleMoveMarqueeItem(idx, 'down')}
+                            disabled={idx === (settings.marquee?.items?.length || 1) - 1}
+                            className="p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 disabled:opacity-30 cursor-pointer"
+                            title="Move item down"
+                          >
+                            <ArrowDown className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        {/* Badge */}
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold shrink-0 uppercase tracking-wider ${
+                          item.urgent
+                            ? 'bg-red-950 text-red-300 border border-red-800 animate-pulse'
+                            : 'bg-blue-900/80 text-amber-300 border border-blue-700/50'
+                        }`}>
+                          {item.badge || 'UPDATE'}
+                        </span>
+
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs sm:text-sm font-medium text-slate-200 truncate">
+                            {item.text}
+                          </p>
+                          {item.link && (
+                            <span className="text-[10px] text-sky-400 font-mono flex items-center gap-1">
+                              Link: {item.link}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                        {/* Urgent toggle */}
+                        <button
+                          onClick={() => handleToggleUrgent(item.id)}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-colors cursor-pointer ${
+                            item.urgent
+                              ? 'bg-red-950 text-red-300 border-red-800'
+                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                          }`}
+                          title="Toggle urgent alert status"
+                        >
+                          {item.urgent ? 'Urgent Alert' : 'Normal'}
+                        </button>
+
+                        {/* Edit button */}
+                        <button
+                          onClick={() => handleEditMarqueeItem(item)}
+                          className="px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-medium cursor-pointer"
+                        >
+                          Edit
+                        </button>
+
+                        {/* Delete button */}
+                        <button
+                          onClick={() => handleDeleteMarqueeItem(item.id)}
+                          className="p-1.5 rounded-md bg-red-950/40 hover:bg-red-900/60 text-red-400 border border-red-900/40 cursor-pointer"
+                          title="Delete announcement"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Add/Edit Marquee Item */}
+        {showAddMarqueeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Megaphone className="w-4 h-4 text-amber-400" />
+                  <span>{editingMarqueeId ? 'Edit Announcement' : 'Add New Announcement'}</span>
+                </h3>
+                <button
+                  onClick={() => setShowAddMarqueeModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveMarqueeItem} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Announcement / Update Text *
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={newMarqueeText}
+                    onChange={(e) => setNewMarqueeText(e.target.value)}
+                    placeholder="e.g. Admissions 2025–26 are now open across 87+ Bahria Foundation Colleges nationwide..."
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-hidden focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Badge Tag
+                    </label>
+                    <input
+                      type="text"
+                      value={newMarqueeBadge}
+                      onChange={(e) => setNewMarqueeBadge(e.target.value)}
+                      placeholder="e.g. ADMISSIONS, BISE 2024, NOTICE"
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Action Link (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={newMarqueeLink}
+                      onChange={(e) => setNewMarqueeLink(e.target.value)}
+                      placeholder="e.g. #admission or https://..."
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 p-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newMarqueeUrgent}
+                      onChange={(e) => setNewMarqueeUrgent(e.target.checked)}
+                      className="w-4 h-4 rounded text-red-500 focus:ring-red-400 bg-slate-900 border-slate-700"
+                    />
+                    <span>Highlight as Urgent / Breaking Announcement (Pulsing Red Tag)</span>
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddMarqueeModal(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer shadow-md shadow-amber-500/20"
+                  >
+                    {editingMarqueeId ? 'Save Changes' : 'Add Announcement'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
