@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Award, ChevronRight, Quote, Shield } from 'lucide-react';
-import { LEADERSHIP_PROFILES } from '../data/beatsData';
+import { useSettings } from '../context/SettingsContext';
 
 interface LeadershipModalProps {
   initialId: 'md' | 'dmd';
@@ -13,11 +13,24 @@ export const LeadershipModal: React.FC<LeadershipModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const { settings } = useSettings();
   const [activeLeaderId, setActiveLeaderId] = useState<'md' | 'dmd'>(initialId);
 
   if (!isOpen) return null;
 
-  const activeLeader = LEADERSHIP_PROFILES.find((p) => p.id === activeLeaderId) || LEADERSHIP_PROFILES[0];
+  const isMd = activeLeaderId === 'md';
+  const activeLeader = {
+    id: activeLeaderId,
+    name: isMd ? (settings.mdName || 'Vice Admiral (R) Muhammad Amjad Khan') : (settings.dmdName || 'Commodore (R) DMD BEATS'),
+    title: isMd ? (settings.mdTitle || 'Managing Director – Bahria Foundation') : (settings.dmdTitle || 'Deputy Managing Director – BEATS'),
+    designation: isMd ? (settings.mdDesignation || 'Managing Director Bahria Foundation (MD-BF)') : (settings.dmdDesignation || 'Deputy Managing Director (DMD-BEATS)'),
+    rank: isMd ? (settings.mdRank || 'Vice Admiral (Retd) • Bahria Foundation') : (settings.dmdRank || 'Bahria Education & Training System'),
+    image: isMd ? (settings.mdImage || 'https://beats.com.pk/wp-content/uploads/2024/12/md-PIC-.jpg') : (settings.dmdImage || 'https://beats.com.pk/wp-content/uploads/2026/09/wordpress_image-931x1024.png'),
+    messageSnippet: isMd ? (settings.mdSnippet || 'To provide quality and affordable education for equipping our youth with knowledge and skills for self-sustainability and socio-economic growth.') : (settings.dmdSnippet || 'Empowering future generations with academic distinction, moral integrity, and certified teacher development.'),
+    fullMessage: (isMd ? settings.mdMessage : settings.dmdMessage)
+      ? (isMd ? settings.mdMessage : settings.dmdMessage).split('\n').map(s => s.trim()).filter(Boolean)
+      : []
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">

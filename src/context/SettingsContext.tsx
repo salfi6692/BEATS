@@ -20,6 +20,59 @@ interface SettingsContextType {
 const STORAGE_KEY = 'beats_site_settings_v2';
 const AUTH_KEY = 'beats_admin_auth_v1';
 
+async function persistSettingsToServer(latestSettings: SiteSettings): Promise<boolean> {
+  try {
+    const payload = JSON.stringify({ settings: latestSettings });
+    let res = await fetch('/api/save-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+
+    if (!res.ok) {
+      // Fallback to PHP script for cPanel Apache hosting
+      res = await fetch('api/save-settings.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      });
+    }
+
+    return res.ok;
+  } catch (e) {
+    console.warn('Background server save failed, settings remain cached locally:', e);
+    return false;
+  }
+}
+
+function mergeSettings(target: SiteSettings, source: any): SiteSettings {
+  if (!source || typeof source !== 'object') return target;
+  return {
+    ...target,
+    ...source,
+    sections: {
+      ...target.sections,
+      ...(source.sections || {})
+    },
+    sectionOrder: Array.isArray(source.sectionOrder) && source.sectionOrder.length > 0
+      ? source.sectionOrder
+      : target.sectionOrder,
+    slides: Array.isArray(source.slides) && source.slides.length > 0
+      ? source.slides
+      : target.slides,
+    galleryPhotos: Array.isArray(source.galleryPhotos) && source.galleryPhotos.length > 0
+      ? source.galleryPhotos
+      : target.galleryPhotos,
+    marquee: {
+      ...target.marquee,
+      ...(source.marquee || {}),
+      items: Array.isArray(source.marquee?.items) && source.marquee.items.length > 0
+        ? source.marquee.items
+        : target.marquee.items
+    }
+  };
+}
+
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -28,36 +81,46 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('beats_site_settings_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_SITE_SETTINGS,
-          ...parsed,
-          sections: {
-            ...DEFAULT_SITE_SETTINGS.sections,
-            ...(parsed.sections || {})
-          },
-          sectionOrder: Array.isArray(parsed.sectionOrder) && parsed.sectionOrder.length > 0
-            ? parsed.sectionOrder
-            : DEFAULT_SITE_SETTINGS.sectionOrder,
-          slides: Array.isArray(parsed.slides) && parsed.slides.length > 0
-            ? parsed.slides
-            : DEFAULT_SITE_SETTINGS.slides,
-          galleryPhotos: Array.isArray(parsed.galleryPhotos) && parsed.galleryPhotos.length > 0
-            ? parsed.galleryPhotos
-            : DEFAULT_SITE_SETTINGS.galleryPhotos,
-          marquee: {
-            ...DEFAULT_SITE_SETTINGS.marquee,
-            ...(parsed.marquee || {}),
-            items: Array.isArray(parsed.marquee?.items) && parsed.marquee.items.length > 0
-              ? parsed.marquee.items
-              : DEFAULT_SITE_SETTINGS.marquee.items
-          }
-        };
+        return mergeSettings(DEFAULT_SITE_SETTINGS, parsed);
       }
     } catch (e) {
       console.error('Failed to load settings from localStorage', e);
     }
     return DEFAULT_SITE_SETTINGS;
   });
+
+  // Load latest settings from site-settings.json on mount so all devices/visitors see updated images & texts
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadServerSettings() {
+      try {
+        // Try fetching site-settings.json with cache buster
+        const res = await fetch(`site-settings.json?v=${Date.now()}`);
+        if (res.ok) {
+          const serverData = await res.json();
+          if (serverData && typeof serverData === 'object') {
+            if (isMounted) {
+              setSettings((prev) => {
+                const merged = mergeSettings(prev, serverData);
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                } catch {}
+                return merged;
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch server site-settings.json:', err);
+      }
+    }
+
+    loadServerSettings();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     try {
@@ -89,8 +152,10 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch (e) {
-        console.error('Failed to persist settings', e);
+        console.error('Failed to persist settings to localStorage', e);
       }
+      // Persist permanently to site-settings.json on disk / cPanel hosting
+      persistSettingsToServer(updated);
       return updated;
     });
   };
@@ -109,6 +174,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (e) {
         console.error('Failed to persist section visibility', e);
       }
+      persistSettingsToServer(updated);
       return updated;
     });
   };
@@ -121,6 +187,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch (e) {
         console.error(e);
       }
+      persistSettingsToServer(updated);
       return updated;
     });
   };
@@ -133,6 +200,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (e) {
       console.error(e);
     }
+    persistSettingsToServer(DEFAULT_SITE_SETTINGS);
   };
 
   const loginAdmin = (user: string, pass: string): boolean => {

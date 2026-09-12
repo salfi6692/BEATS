@@ -303,12 +303,21 @@ export const Footer: React.FC<FooterProps> = ({
             </a>
             <span>•</span>
             <a
+              href="/cpanel-public-html.zip"
+              download="cpanel-public-html.zip"
+              className="text-sky-300 hover:text-white transition-colors font-semibold flex items-center gap-1 bg-sky-950/80 hover:bg-sky-900 px-2.5 py-1 rounded-md border border-sky-800"
+              title="Download package ready to extract directly into cPanel public_html"
+            >
+              <span>Download for cPanel public_html (.zip)</span>
+            </a>
+            <span>•</span>
+            <a
               href="/beats-portal-build.zip"
               download="beats-portal-build.zip"
-              className="text-amber-400/90 hover:text-amber-300 transition-colors font-semibold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20"
-              title="Download Latest Production Build & Source Archive (.zip)"
+              className="text-slate-400 hover:text-slate-200 transition-colors text-[11px] underline"
+              title="Download Full Project Source & Build (.zip)"
             >
-              <span>Download Latest Build (.zip)</span>
+              <span>Full Source (.zip)</span>
             </a>
           </div>
 

@@ -99,7 +99,27 @@ export interface SiteSettings {
   statPassRate: string;
   statInstitutes: string;
 
-  // About Section Content
+  // Executive Leadership (MD-BF & DMD-BEATS)
+  mdName: string;
+  mdTitle: string;
+  mdDesignation: string;
+  mdRank: string;
+  mdImage: string;
+  mdSnippet: string;
+  mdMessage: string;
+
+  dmdName: string;
+  dmdTitle: string;
+  dmdDesignation: string;
+  dmdRank: string;
+  dmdImage: string;
+  dmdSnippet: string;
+  dmdMessage: string;
+
+  // About Section Content & Image
+  aboutImage: string;
+  aboutMission: string;
+  aboutHistory: string;
   aboutBadge: string;
   aboutHeading: string;
   aboutDescription: string;
@@ -117,27 +137,45 @@ export interface SiteSettings {
   academicHeading: string;
   academicSubheading: string;
 
-  // Achievements Section Content
+  // Achievements Section Content & Image
   achievementsHeading: string;
   achievementsSubheading: string;
+  achievementsImage: string;
+  achievementsStatCandidates: string;
+  achievementsStatTopPositions: string;
   cnsAwardTitle: string;
   cnsAwardDesc: string;
 
-  // Why Choose Us Section Content
+  // Why Choose Us Section Content & Image
   whyChooseHeading: string;
   whyChooseSubheading: string;
+  whyChooseImage: string;
+  whyChoosePhilosophyTitle: string;
+  whyChoosePhilosophyDesc: string;
 
   // Campus Life Gallery Photos
   galleryHeading: string;
   gallerySubheading: string;
   galleryPhotos: GalleryPhotoItem[];
 
-  // Regional Directory Section Content
+  // Regional Directory Section Content & Office Details
   directoryHeading: string;
   directorySubheading: string;
   northCampusesCount: number;
   centreCampusesCount: number;
   southCampusesCount: number;
+  northAddress: string;
+  northPhones: string;
+  northEmail: string;
+  northDistricts: string;
+  centreAddress: string;
+  centrePhones: string;
+  centreEmail: string;
+  centreDistricts: string;
+  southAddress: string;
+  southPhones: string;
+  southEmail: string;
+  southDistricts: string;
 
   // Footer Content
   footerDescription: string;
@@ -318,7 +356,27 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   statPassRate: '94%',
   statInstitutes: '03 TTIs',
 
+  // Executive Leadership (MD-BF & DMD-BEATS)
+  mdName: 'Vice Admiral (R) Muhammad Amjad Khan',
+  mdTitle: 'Managing Director – Bahria Foundation',
+  mdDesignation: 'Managing Director Bahria Foundation (MD-BF)',
+  mdRank: 'Vice Admiral (Retd) • Bahria Foundation',
+  mdImage: 'https://beats.com.pk/wp-content/uploads/2024/12/md-PIC-.jpg',
+  mdSnippet: 'To provide quality and affordable education for equipping our youth with knowledge and skills for self-sustainability and socio-economic growth.',
+  mdMessage: 'Bahria Education and Training System (BEATS) was founded with a profound patriotic vision: to deliver world-class academic institutions to every corner of Pakistan, especially our coastal belts and under-served hinterlands.\n\nUnder the umbrella of Bahria Foundation, we take immense pride in nurturing over 37,000 students across 87+ campuses. We blend disciplined naval values with modern pedagogical standards to cultivate resilient leaders of tomorrow.\n\nOur commitment remains steadfast in supporting families through affordable tuition, merit scholarships, and modern digital learning infrastructure.',
+
+  dmdName: 'Commodore (R) DMD BEATS',
+  dmdTitle: 'Deputy Managing Director – BEATS',
+  dmdDesignation: 'Deputy Managing Director (DMD-BEATS)',
+  dmdRank: 'Bahria Education & Training System',
+  dmdImage: 'https://beats.com.pk/wp-content/uploads/2026/09/wordpress_image-931x1024.png',
+  dmdSnippet: 'Empowering future generations with academic distinction, moral integrity, and certified teacher development.',
+  dmdMessage: 'At BEATS, we believe the heart of an institution lies in its teaching faculty and student welfare. We have established dedicated Teacher Training Institutes to continually upskill our educators.\n\nWith a 94% BISE passing average and consistent nationwide board positions, our schools and colleges provide a proven launchpad for admissions into prestigious medical, engineering, and defense academies.\n\nWe welcome parents and students into the Bahria family where tradition meets progressive education.',
+
   // About Section
+  aboutImage: 'https://beats.com.pk/wp-content/uploads/2026/09/Code_Generated_Image-4-853x1024.gif',
+  aboutMission: 'To provide quality and affordable education for equipping the beneficiaries with knowledge and skills for self-sustainability and socio-economic growth.',
+  aboutHistory: 'Bahria Education And Training System (BEATS) was established in 1998 following the visionary directive of the Bahria Foundation to spread modern, high-quality educational facilities all over the country—especially in under-developed and remote areas.',
   aboutBadge: 'Our Foundation & Legacy',
   aboutHeading: 'A Quarter-Century of Empowering Pakistan Through Education',
   aboutDescription: 'Bahria Education & Training System (BEATS), a key pillar of Bahria Foundation, operates as a non-profit commercial enterprise under the patronship of Pakistan Navy. Since 1998, BEATS has delivered affordable, high-standard education across Pakistan.',
@@ -339,12 +397,18 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   // Achievements
   achievementsHeading: 'Recognized Academic Distinction & Board Laurels',
   achievementsSubheading: 'Our scholars consistently secure top positions in BISE Board examinations, backed by nationwide merit scholarships and cash awards.',
+  achievementsImage: 'https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg',
+  achievementsStatCandidates: '1,607',
+  achievementsStatTopPositions: 'Top 10',
   cnsAwardTitle: 'Chief of Naval Staff Academic Excellence Award',
   cnsAwardDesc: 'Top-performing students and best-performing Bahria Foundation Colleges receive ceremonial shields, certificates of honor, and cash prizes personally awarded by the Chief of Naval Staff, Pakistan Navy.',
 
   // Why Choose Us
   whyChooseHeading: 'Why Choose Bahria Foundation Colleges?',
   whyChooseSubheading: 'Discover the hallmark distinctions that set our 87+ campuses apart as the primary choice for over 37,000 families across Pakistan.',
+  whyChooseImage: 'https://beats.com.pk/wp-content/uploads/2023/05/bfeis-3.webp',
+  whyChoosePhilosophyTitle: 'Character, Discipline & Academic Leadership Under One Roof',
+  whyChoosePhilosophyDesc: 'Bahria Foundation Colleges represent a standard of trust. Our schools cultivate an atmosphere where academic curiosity is matched by personal discipline, patriotic reverence, and empathy.',
 
   // Campus Life
   galleryHeading: 'Life at Bahria Foundation Colleges',
@@ -357,6 +421,18 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   northCampusesCount: 42,
   centreCampusesCount: 26,
   southCampusesCount: 19,
+  northAddress: 'Japan Road, Near Ibadat University, Sihala, Islamabad',
+  northPhones: '+92-51-8153585, +92-51-8153584, +92-51-8153588',
+  northEmail: 'beats@bahriafoundation.com',
+  northDistricts: 'Islamabad, Rawalpindi, Peshawar, Abbottabad, Gilgit, Muzaffarabad, Gujar Khan',
+  centreAddress: 'Naval Complex Askari - 1, Near Walton Airport, Gulberg - III, Lahore',
+  centrePhones: '+92-42-5889415',
+  centreEmail: 'dbeatsc@bahriafoundation.com',
+  centreDistricts: 'Lahore, Faisalabad, Multan, Sialkot, Gujranwala, Bahawalpur, Sargodha',
+  southAddress: '2nd Floor, Bahria Complex-I, M.T. Khan Road, Karachi',
+  southPhones: '+92-21-35610364, +92-21-35610242-3',
+  southEmail: 'dbeatss@bahriafoundation.com',
+  southDistricts: 'Karachi, Hyderabad, Ormara, Gwadar, Pasni, Sukkur, Larkana',
 
   // Footer
   footerDescription: 'Bahria Education & Training System (BEATS) operates 87+ high-standard schools and colleges across Pakistan under Bahria Foundation, Pakistan Navy.',

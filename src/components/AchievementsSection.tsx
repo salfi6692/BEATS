@@ -37,7 +37,7 @@ export const AchievementsSection: React.FC = () => {
             <div className="lg:col-span-6 space-y-3">
               <div className="relative rounded-2xl overflow-hidden border border-slate-600 shadow-xl group">
                 <img
-                  src="https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg"
+                  src={settings.achievementsImage || 'https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg'}
                   alt="Chief of Naval Staff Awarding Medals and Certificates to BFC Position Holders"
                   className="w-full h-auto object-cover max-h-[380px] transition-transform duration-500 group-hover:scale-103"
                 />
@@ -68,7 +68,7 @@ export const AchievementsSection: React.FC = () => {
                 </p>
 
                 <p className="text-slate-300 text-sm leading-relaxed font-light">
-                  Results of the centralized formal assessment of Grade 10 students across Pakistan revealed that out of <strong className="text-amber-300 font-semibold">1,607 BFC candidates</strong> appearing in the SSC-II examination, the overall passing average across all 3 regions remained a remarkable <strong className="text-emerald-400 font-bold">{settings.statPassRate || '94%'}</strong>.
+                  Results of the centralized formal assessment of Grade 10 students across Pakistan revealed that out of <strong className="text-amber-300 font-semibold">{settings.achievementsStatCandidates || '1,607'} BFC candidates</strong> appearing in the SSC-II examination, the overall passing average across all 3 regions remained a remarkable <strong className="text-emerald-400 font-bold">{settings.statPassRate || '94%'}</strong>.
                 </p>
               </div>
 
@@ -81,13 +81,13 @@ export const AchievementsSection: React.FC = () => {
                 </div>
 
                 <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-700 text-left">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-display">1,607</div>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-amber-400 font-display">{settings.achievementsStatCandidates || '1,607'}</div>
                   <div className="text-xs font-semibold text-slate-300 mt-1">Candidates</div>
                   <div className="text-[10px] text-slate-400">SSC-II examinations</div>
                 </div>
 
                 <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-700 text-left col-span-2 sm:col-span-1">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-sky-400 font-display">Top 10</div>
+                  <div className="text-2xl sm:text-3xl font-extrabold text-sky-400 font-display">{settings.achievementsStatTopPositions || 'Top 10'}</div>
                   <div className="text-xs font-semibold text-slate-300 mt-1">Board Positions</div>
                   <div className="text-[10px] text-slate-400">Cash prizes &amp; medals</div>
                 </div>

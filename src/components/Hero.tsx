@@ -56,19 +56,19 @@ export const Hero: React.FC<HeroProps> = ({
             <div className="lg:col-span-8 space-y-4 text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/60 border border-blue-700/50 text-blue-200 text-xs font-semibold backdrop-blur-xs">
                 <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span>Welcome To Bahria Education and Training System</span>
+                <span>{settings.heroBadgeText || 'Welcome To Bahria Education and Training System'}</span>
               </div>
 
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight font-display">
-                Bahria Education and Training System (BEATS)
+                {settings.heroHeadline || 'Bahria Education and Training System (BEATS)'}
               </h2>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Bahria Education And Training System (BEATS) was established in 1998 following the vision of Bahria Foundation to spread education facilities all over the country, especially in under-developed areas.
+                {settings.heroSubheadline || 'Bahria Education And Training System (BEATS) was established in 1998 following the vision of Bahria Foundation to spread education facilities all over the country, especially in under-developed areas.'}
               </p>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                BEATS has progressed well over the years and is presently operating more than <span className="text-amber-400 font-bold">87 Bahria Foundation School and Colleges</span> located all across Pakistan. BEATS is catering to the educational needs of approximately <span className="text-sky-300 font-bold">37,000 students</span> in rural and urban areas of Pakistan. BEATS also own training institutes to train their teachers.
+                BEATS has progressed well over the years and is presently operating more than <span className="text-amber-400 font-bold">{settings.statCampuses || '87+'} Bahria Foundation School and Colleges</span> located all across Pakistan. BEATS is catering to the educational needs of approximately <span className="text-sky-300 font-bold">{settings.statStudents || '37,000+'} students</span> in rural and urban areas of Pakistan. BEATS also own training institutes to train their teachers.
               </p>
 
               {/* Badges / Metrics Row */}

@@ -50,10 +50,10 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({
             <div className="lg:col-span-6 space-y-5 text-left">
               <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Educational Philosophy</span>
               <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
-                Character, Discipline &amp; Academic Leadership Under One Roof
+                {settings.whyChoosePhilosophyTitle || 'Character, Discipline & Academic Leadership Under One Roof'}
               </h3>
               <p className="text-slate-600 text-sm leading-relaxed">
-                Bahria Foundation Colleges represent a standard of trust. Our schools cultivate an atmosphere where academic curiosity is matched by personal discipline, patriotic reverence, and empathy.
+                {settings.whyChoosePhilosophyDesc || 'Bahria Foundation Colleges represent a standard of trust. Our schools cultivate an atmosphere where academic curiosity is matched by personal discipline, patriotic reverence, and empathy.'}
               </p>
 
               <div className="space-y-3 pt-2">
@@ -111,7 +111,7 @@ export const WhyChooseUs: React.FC<WhyChooseUsProps> = ({
             <div className="lg:col-span-6">
               <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-slate-100">
                 <img
-                  src="https://beats.com.pk/wp-content/uploads/2023/05/bfeis-3.webp"
+                  src={settings.whyChooseImage || 'https://beats.com.pk/wp-content/uploads/2023/05/bfeis-3.webp'}
                   alt="Bahria Foundation College Campus"
                   className="w-full h-auto object-cover max-h-[380px]"
                 />

@@ -92,7 +92,7 @@ export const AboutOverview: React.FC<AboutOverviewProps> = ({
                     BEATS Official Mission Statement
                   </div>
                   <p className="text-sm sm:text-base italic text-slate-200 font-light leading-relaxed">
-                    &ldquo;To provide quality and affordable education for equipping the beneficiaries with knowledge and skills for self-sustainability and socio-economic growth.&rdquo;
+                    &ldquo;{settings.aboutMission || 'To provide quality and affordable education for equipping the beneficiaries with knowledge and skills for self-sustainability and socio-economic growth.'}&rdquo;
                   </p>
                 </div>
               </div>
@@ -124,7 +124,7 @@ export const AboutOverview: React.FC<AboutOverviewProps> = ({
             <div className="relative mx-auto max-w-md lg:max-w-none">
               <div className="relative rounded-2xl overflow-hidden shadow-xl border border-slate-200 bg-white">
                 <img
-                  src="https://beats.com.pk/wp-content/uploads/2026/09/Code_Generated_Image-4-853x1024.gif"
+                  src={settings.aboutImage || 'https://beats.com.pk/wp-content/uploads/2026/09/Code_Generated_Image-4-853x1024.gif'}
                   alt="Bahria Education and Training System Overview"
                   className="w-full h-auto object-cover max-h-[460px]"
                 />

@@ -1,0 +1,223 @@
+{
+  "siteTitle": "Bahria Education & Training System",
+  "tagline": "A Prestigious Education Network Under Bahria Foundation (Pakistan Navy)",
+  "logoUrl": "https://beats.com.pk/wp-content/uploads/2023/04/beats-bahria-logo-300x112-1.webp",
+  "faviconUrl": "https://beats.com.pk/wp-content/uploads/2023/04/cropped-beats-fav-32x32.png",
+  "navyThemeShade": "deep-navy",
+  "fontSizeScale": "normal",
+  "accentColor": "#f59e0b",
+  "headerAnnouncement": "Admissions Open for Academic Session 2025-2026 across all North, Central & South Regions!",
+  "admissionPhone": "+92-51-8153585",
+  "admissionEmail": "beats@bahriafoundation.com",
+  "prospectusUrl": "https://beats.com.pk/wp-content/uploads/2024/12/Final-PROSPECTUS-22-02-2024.pdf",
+  "marquee": {
+    "enabled": true,
+    "label": "LATEST UPDATES",
+    "speed": "normal",
+    "theme": "navy",
+    "pauseOnHover": true,
+    "items": [
+      {
+        "id": "m1",
+        "text": "Admissions Open 2025-2026: Montessori, Primary, Secondary (SSC), HSSC & Cambridge O-Level across all campuses nationwide.",
+        "badge": "ADMISSIONS 2025-26",
+        "isUrgent": true
+      },
+      {
+        "id": "m2",
+        "text": "Chief of Naval Staff Admiral M Amjad Khan Niazi NI (M) S Bt confers Certificates of Appreciation & Cash Prizes to BISE Position Holders.",
+        "badge": "CNS AWARD",
+        "isUrgent": false
+      },
+      {
+        "id": "m3",
+        "text": "Grade 10 Annual BISE Examinations: 1,607 BFC candidates achieve an outstanding 94% passing average across all 3 regions.",
+        "badge": "94% PASS RATE",
+        "isUrgent": false
+      },
+      {
+        "id": "m4",
+        "text": "Bahria Education & Training System currently operates 87+ Colleges & Schools catering to ~37,000 students with dedicated Teacher Training Institutes.",
+        "badge": "NETWORK",
+        "isUrgent": false
+      },
+      {
+        "id": "m5",
+        "text": "Official Prospectus 2024-2026 available for instant download with detailed curriculum, fee schedule, and scholarship criteria.",
+        "badge": "PROSPECTUS",
+        "isUrgent": false
+      }
+    ]
+  },
+  "heroAutoPlaySpeed": 6,
+  "heroBadgeText": "Bahria Foundation • Established 1998 | A Trusted Partner",
+  "heroHeadline": "Nurturing Intellect, Inculcating Maritime Discipline",
+  "heroSubheadline": "Empowering over 37,000 students across 87+ campuses with quality education, rigorous moral ethics, and progressive curricula.",
+  "slides": [
+    {
+      "id": "slide-1",
+      "image": "https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg",
+      "tag": "Bahria Foundation • Est. 1998",
+      "title": "Bahria Education & Training System (BEATS)",
+      "caption": "Operating 87+ Bahria Foundation Schools & Colleges catering to ~37,000 students with naval ethos, academic rigor, and moral leadership."
+    },
+    {
+      "id": "slide-2",
+      "image": "https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg",
+      "tag": "Academic Distinction & Board Laurels",
+      "title": "Awarded by Chief of Naval Staff for BISE Board Positions",
+      "caption": "Certificates of Appreciation, Cash Prizes and Medals awarded. 94% passing average achieved across 1,607 SSC-II candidates."
+    },
+    {
+      "id": "slide-3",
+      "image": "https://beats.com.pk/wp-content/uploads/2024/09/WhatsApp-Image-2024-09-27-at-6.14.33-PM-768x512.jpeg",
+      "tag": "Comprehensive Curriculum",
+      "title": "Structured Pathways from Montessori to Cambridge O-Level & HSSC",
+      "caption": "English medium instruction across Montessori, Primary, Secondary, Higher Secondary, and Cambridge O-Level streams."
+    },
+    {
+      "id": "slide-4",
+      "image": "https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.15.10-PM-768x432.jpeg",
+      "tag": "Bahria Foundation Educational Institutions",
+      "title": "Integrated Network of Formal, Vocational & Community Education",
+      "caption": "State-of-the-art facilities, modern science & computer laboratories, athletic fields, and 03 dedicated Teacher Training Institutes."
+    }
+  ],
+  "sectionOrder": [
+    "hero",
+    "statsBanner",
+    "aboutOverview",
+    "academicStreams",
+    "achievements",
+    "whyChooseUs",
+    "campusGallery",
+    "regionalDirectory"
+  ],
+  "sections": {
+    "topBar": true,
+    "hero": true,
+    "statsBanner": true,
+    "aboutOverview": true,
+    "academicStreams": true,
+    "achievements": true,
+    "whyChooseUs": true,
+    "campusGallery": true,
+    "regionalDirectory": true,
+    "footer": true
+  },
+  "statCampuses": "87+",
+  "statStudents": "37,000+",
+  "statFaculty": "2,200+",
+  "statPassRate": "94%",
+  "statInstitutes": "03 TTIs",
+  "mdName": "Vice Admiral (R) Muhammad Amjad Khan",
+  "mdTitle": "Managing Director – Bahria Foundation",
+  "mdDesignation": "Managing Director Bahria Foundation (MD-BF)",
+  "mdRank": "Vice Admiral (Retd) • Bahria Foundation",
+  "mdImage": "https://beats.com.pk/wp-content/uploads/2024/12/md-PIC-.jpg",
+  "mdSnippet": "To provide quality and affordable education for equipping our youth with knowledge and skills for self-sustainability and socio-economic growth.",
+  "mdMessage": "Bahria Education and Training System (BEATS) was founded with a profound patriotic vision: to deliver world-class academic institutions to every corner of Pakistan, especially our coastal belts and under-served hinterlands.\n\nUnder the umbrella of Bahria Foundation, we take immense pride in nurturing over 37,000 students across 87+ campuses. We blend disciplined naval values with modern pedagogical standards to cultivate resilient leaders of tomorrow.\n\nOur commitment remains steadfast in supporting families through affordable tuition, merit scholarships, and modern digital learning infrastructure.",
+  "dmdName": "Commodore (R) DMD BEATS",
+  "dmdTitle": "Deputy Managing Director – BEATS",
+  "dmdDesignation": "Deputy Managing Director (DMD-BEATS)",
+  "dmdRank": "Bahria Education & Training System",
+  "dmdImage": "https://beats.com.pk/wp-content/uploads/2026/09/wordpress_image-931x1024.png",
+  "dmdSnippet": "Empowering future generations with academic distinction, moral integrity, and certified teacher development.",
+  "dmdMessage": "At BEATS, we believe the heart of an institution lies in its teaching faculty and student welfare. We have established dedicated Teacher Training Institutes to continually upskill our educators.\n\nWith a 94% BISE passing average and consistent nationwide board positions, our schools and colleges provide a proven launchpad for admissions into prestigious medical, engineering, and defense academies.\n\nWe welcome parents and students into the Bahria family where tradition meets progressive education.",
+  "aboutImage": "https://beats.com.pk/wp-content/uploads/2026/09/Code_Generated_Image-4-853x1024.gif",
+  "aboutMission": "To provide quality and affordable education for equipping the beneficiaries with knowledge and skills for self-sustainability and socio-economic growth.",
+  "aboutHistory": "Bahria Education And Training System (BEATS) was established in 1998 following the visionary directive of the Bahria Foundation to spread modern, high-quality educational facilities all over the country—especially in under-developed and remote areas.",
+  "aboutBadge": "Our Foundation & Legacy",
+  "aboutHeading": "A Quarter-Century of Empowering Pakistan Through Education",
+  "aboutDescription": "Bahria Education & Training System (BEATS), a key pillar of Bahria Foundation, operates as a non-profit commercial enterprise under the patronship of Pakistan Navy. Since 1998, BEATS has delivered affordable, high-standard education across Pakistan.",
+  "pillar1Title": "Formal Academic Campuses",
+  "pillar1Desc": "Preschool, Primary, Secondary (SSC), Higher Secondary (HSSC/College), and Cambridge O-Level curricula.",
+  "pillar2Title": "Vocational & Technical Centers",
+  "pillar2Desc": "Applied skills, IT training, and market-driven vocational trades preparing young men and women for immediate careers.",
+  "pillar3Title": "Non-Formal & Adult Education",
+  "pillar3Desc": "Community-based literacy centers providing basic numeracy and functional reading in rural and coastal settlements.",
+  "pillar4Title": "Joint-Venture & Promotional Projects",
+  "pillar4Desc": "Public-private educational partnerships expanding access in remote areas of Balochistan, Sindh, and Khyber Pakhtunkhwa.",
+  "academicBadge": "Academic Streams & Curriculum",
+  "academicHeading": "Four Rigorous Academic Pathways for Every Stage",
+  "academicSubheading": "From foundational Montessori nurturing to international Cambridge certifications and national BISE excellence, our campuses provide structured paths for student brilliance.",
+  "achievementsHeading": "Recognized Academic Distinction & Board Laurels",
+  "achievementsSubheading": "Our scholars consistently secure top positions in BISE Board examinations, backed by nationwide merit scholarships and cash awards.",
+  "achievementsImage": "https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg",
+  "achievementsStatCandidates": "1,607",
+  "achievementsStatTopPositions": "Top 10",
+  "cnsAwardTitle": "Chief of Naval Staff Academic Excellence Award",
+  "cnsAwardDesc": "Top-performing students and best-performing Bahria Foundation Colleges receive ceremonial shields, certificates of honor, and cash prizes personally awarded by the Chief of Naval Staff, Pakistan Navy.",
+  "whyChooseHeading": "Why Choose Bahria Foundation Colleges?",
+  "whyChooseSubheading": "Discover the hallmark distinctions that set our 87+ campuses apart as the primary choice for over 37,000 families across Pakistan.",
+  "whyChooseImage": "https://beats.com.pk/wp-content/uploads/2023/05/bfeis-3.webp",
+  "whyChoosePhilosophyTitle": "Character, Discipline & Academic Leadership Under One Roof",
+  "whyChoosePhilosophyDesc": "Bahria Foundation Colleges represent a standard of trust. Our schools cultivate an atmosphere where academic curiosity is matched by personal discipline, patriotic reverence, and empathy.",
+  "galleryHeading": "Life at Bahria Foundation Colleges",
+  "gallerySubheading": "Moments of academic rigor, athletic competitions, character-building assemblies, and experiential science learning across our nationwide campuses.",
+  "galleryPhotos": [
+    {
+      "id": "g1",
+      "title": "Investiture & Prize Distribution Ceremony",
+      "category": "Ceremony",
+      "image": "https://beats.com.pk/wp-content/uploads/2024/09/WhatsApp-Image-2024-09-27-at-6.14.33-PM-768x512.jpeg",
+      "caption": "Student council investiture and academic merit award ceremony at Bahria Foundation College."
+    },
+    {
+      "id": "g2",
+      "title": "Morning Assembly & Character Building",
+      "category": "Campus Life",
+      "image": "https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg",
+      "caption": "Students gathered in disciplined naval uniform during morning parade and national anthem."
+    },
+    {
+      "id": "g3",
+      "title": "Modern Science & ICT Laboratory",
+      "category": "Facilities",
+      "image": "https://beats.com.pk/wp-content/uploads/2023/05/bfeis-5.webp",
+      "caption": "Well-equipped physics, chemistry, and biology labs allowing practical experimental learning."
+    },
+    {
+      "id": "g4",
+      "title": "Interactive Classroom Learning",
+      "category": "Academics",
+      "image": "https://beats.com.pk/wp-content/uploads/2023/05/bfeis-6.webp",
+      "caption": "Engaging multimedia classrooms fostering collaborative inquiry and student participation."
+    },
+    {
+      "id": "g5",
+      "title": "Co-Curriculars & Sports Championship",
+      "category": "Campus Life",
+      "image": "https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.15.10-PM-768x432.jpeg",
+      "caption": "Annual athletics meet, march-past, and inter-house football tournament."
+    },
+    {
+      "id": "g6",
+      "title": "Montessori Activity & Play Learning",
+      "category": "Academics",
+      "image": "https://beats.com.pk/wp-content/uploads/2023/05/bfeis-1.webp",
+      "caption": "Early childhood sensorial education and cognitive development in dedicated activity suites."
+    }
+  ],
+  "directoryHeading": "Nationwide Directorate & Regional Offices",
+  "directorySubheading": "Coordinating academic excellence, quality assurance, and institutional operations across North, Central, and South regions.",
+  "northCampusesCount": 42,
+  "centreCampusesCount": 26,
+  "southCampusesCount": 19,
+  "northAddress": "Japan Road, Near Ibadat University, Sihala, Islamabad",
+  "northPhones": "+92-51-8153585, +92-51-8153584, +92-51-8153588",
+  "northEmail": "beats@bahriafoundation.com",
+  "northDistricts": "Islamabad, Rawalpindi, Peshawar, Abbottabad, Gilgit, Muzaffarabad, Gujar Khan",
+  "centreAddress": "Naval Complex Askari - 1, Near Walton Airport, Gulberg - III, Lahore",
+  "centrePhones": "+92-42-5889415",
+  "centreEmail": "dbeatsc@bahriafoundation.com",
+  "centreDistricts": "Lahore, Faisalabad, Multan, Sialkot, Gujranwala, Bahawalpur, Sargodha",
+  "southAddress": "2nd Floor, Bahria Complex-I, M.T. Khan Road, Karachi",
+  "southPhones": "+92-21-35610364, +92-21-35610242-3",
+  "southEmail": "dbeatss@bahriafoundation.com",
+  "southDistricts": "Karachi, Hyderabad, Ormara, Gwadar, Pasni, Sukkur, Larkana",
+  "footerDescription": "Bahria Education & Training System (BEATS) operates 87+ high-standard schools and colleges across Pakistan under Bahria Foundation, Pakistan Navy.",
+  "footerHelpline": "+92 51 8356193",
+  "footerEmail": "info@beats.com.pk",
+  "footerAddress": "Bahria Foundation, Head Office, H-8/4, Islamabad, Pakistan"
+}

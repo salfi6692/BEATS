@@ -31,7 +31,7 @@ export async function convertImageToWebP(file: File, quality = 0.85): Promise<st
           const webpDataUrl = canvas.toDataURL('image/webp', quality);
           // If browser doesn't support webp export, it falls back to png
           resolve(webpDataUrl);
-        } catch (err) {
+        } catch {
           // Fallback to original read
           resolve(e.target?.result as string);
         }
@@ -42,6 +42,93 @@ export async function convertImageToWebP(file: File, quality = 0.85): Promise<st
     reader.onerror = () => reject(new Error('Failed to read image file'));
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Creates a clean, safe filename with .webp extension
+ */
+export function sanitizeWebpFilename(originalName: string, prefix?: string): string {
+  // Remove file extension
+  let baseName = originalName.replace(/\.[^/.]+$/, '').trim();
+  // Sanitize characters
+  baseName = baseName
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  if (prefix) {
+    const cleanPrefix = prefix
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, '_')
+      .replace(/_+/g, '_');
+    baseName = `${cleanPrefix}_${baseName}`;
+  }
+
+  if (!baseName) {
+    baseName = `media_${Date.now()}`;
+  }
+
+  // Append short timestamp suffix if name is generic to avoid collision
+  const shortTimestamp = Math.floor(Date.now() / 1000).toString().slice(-4);
+  return `${baseName}_${shortTimestamp}.webp`;
+}
+
+/**
+ * Converts image to WebP and physically uploads/saves it into the server's public/media directory.
+ * Returns the final URL (/media/filename.webp) and filename.
+ */
+export async function uploadAndSaveWebP(
+  file: File,
+  filenamePrefix?: string,
+  quality = 0.85
+): Promise<{ url: string; filename: string }> {
+  // 1. Convert to WebP base64
+  const webpDataUrl = await convertImageToWebP(file, quality);
+  const filename = sanitizeWebpFilename(file.name, filenamePrefix);
+
+  // 2. Upload to server endpoint to save into public/media
+  try {
+    const payload = JSON.stringify({
+      filename,
+      base64: webpDataUrl
+    });
+
+    let res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+
+    if (!res.ok) {
+      // Fallback try upload.php for cPanel Apache environments
+      res = await fetch('api/upload.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
+      });
+    }
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.url) {
+        // Return clean URL path for media
+        const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+        return {
+          url: finalUrl,
+          filename: data.filename || filename
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Media upload to server failed, falling back to base64 WebP URL:', err);
+  }
+
+  // Graceful fallback to dataUrl so user sees image immediately even if server is offline
+  return {
+    url: webpDataUrl,
+    filename
+  };
 }
 
 /**

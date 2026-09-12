@@ -12,7 +12,41 @@ export const RegionalDirectory: React.FC<RegionalDirectoryProps> = ({ onOpenAdmi
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const filteredOffices = REGIONAL_OFFICES.filter((office) => {
+  const offices = REGIONAL_OFFICES.map((base) => {
+    if (base.id === 'north') {
+      return {
+        ...base,
+        campusesCount: settings.northCampusesCount || base.campusesCount,
+        address: settings.northAddress || base.address,
+        phones: settings.northPhones ? settings.northPhones.split(',').map(s => s.trim()) : base.phones,
+        email: settings.northEmail || base.email,
+        highlightDistricts: settings.northDistricts ? settings.northDistricts.split(',').map(s => s.trim()) : base.highlightDistricts,
+      };
+    }
+    if (base.id === 'centre') {
+      return {
+        ...base,
+        campusesCount: settings.centreCampusesCount || base.campusesCount,
+        address: settings.centreAddress || base.address,
+        phones: settings.centrePhones ? settings.centrePhones.split(',').map(s => s.trim()) : base.phones,
+        email: settings.centreEmail || base.email,
+        highlightDistricts: settings.centreDistricts ? settings.centreDistricts.split(',').map(s => s.trim()) : base.highlightDistricts,
+      };
+    }
+    if (base.id === 'south') {
+      return {
+        ...base,
+        campusesCount: settings.southCampusesCount || base.campusesCount,
+        address: settings.southAddress || base.address,
+        phones: settings.southPhones ? settings.southPhones.split(',').map(s => s.trim()) : base.phones,
+        email: settings.southEmail || base.email,
+        highlightDistricts: settings.southDistricts ? settings.southDistricts.split(',').map(s => s.trim()) : base.highlightDistricts,
+      };
+    }
+    return base;
+  });
+
+  const filteredOffices = offices.filter((office) => {
     const matchesTab = activeTab === 'all' || office.id === activeTab;
     const matchesSearch =
       searchQuery === '' ||

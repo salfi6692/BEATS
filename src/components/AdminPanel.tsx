@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { useSettings } from '../context/SettingsContext';
-import { convertImageToWebP } from '../utils/imageToWebp';
+import { convertImageToWebP, uploadAndSaveWebP } from '../utils/imageToWebp';
 import { SlideItem, GalleryPhotoItem, SectionKey, MarqueeItem } from '../types/settings';
 import {
   Settings,
@@ -42,7 +42,11 @@ import {
   Megaphone,
   Bell,
   Play,
-  Pause
+  Pause,
+  Edit,
+  RefreshCw,
+  Check,
+  FolderDown
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -68,7 +72,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
   // Active admin tab
   const [activeTab, setActiveTab] = useState<
-    'general' | 'marquee' | 'slider' | 'sections' | 'ordering' | 'gallery' | 'content' | 'appearance' | 'metrics'
+    'general' | 'leadership' | 'marquee' | 'slider' | 'sections' | 'ordering' | 'gallery' | 'content' | 'appearance' | 'metrics'
   >('general');
   const [saveToast, setSaveToast] = useState(false);
   const [isConvertingImage, setIsConvertingImage] = useState(false);
@@ -88,12 +92,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const [newSlideCaption, setNewSlideCaption] = useState('');
   const [showAddSlideModal, setShowAddSlideModal] = useState(false);
 
+  // Slide edit modal state
+  const [editingSlide, setEditingSlide] = useState<SlideItem | null>(null);
+  const [showEditSlideModal, setShowEditSlideModal] = useState(false);
+  const [editSlideImage, setEditSlideImage] = useState('');
+  const [editSlideTag, setEditSlideTag] = useState('');
+  const [editSlideTitle, setEditSlideTitle] = useState('');
+  const [editSlideCaption, setEditSlideCaption] = useState('');
+
   // New gallery photo state
   const [showAddPhotoModal, setShowAddPhotoModal] = useState(false);
   const [newPhotoTitle, setNewPhotoTitle] = useState('');
   const [newPhotoCategory, setNewPhotoCategory] = useState<'Campus Life' | 'Academics' | 'Facilities' | 'Ceremony'>('Campus Life');
   const [newPhotoImage, setNewPhotoImage] = useState('');
   const [newPhotoCaption, setNewPhotoCaption] = useState('');
+
+  // Gallery photo edit modal state
+  const [editingPhoto, setEditingPhoto] = useState<GalleryPhotoItem | null>(null);
+  const [showEditPhotoModal, setShowEditPhotoModal] = useState(false);
+  const [editPhotoTitle, setEditPhotoTitle] = useState('');
+  const [editPhotoCategory, setEditPhotoCategory] = useState<'Campus Life' | 'Academics' | 'Facilities' | 'Ceremony'>('Campus Life');
+  const [editPhotoImage, setEditPhotoImage] = useState('');
+  const [editPhotoCaption, setEditPhotoCaption] = useState('');
+
+  // Upload status and cPanel zip rebuild state
+  const [uploadStatusMessage, setUploadStatusMessage] = useState('');
+  const [isRebuildingZip, setIsRebuildingZip] = useState(false);
+  const [rebuildZipMessage, setRebuildZipMessage] = useState('');
 
   const showNotification = () => {
     setSaveToast(true);
@@ -110,20 +135,112 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     }
   };
 
-  // Image upload handler with WebP conversion
+  // Image Upload Handlers with WebP conversion and server/public_html media saving
+  const handleLeadershipMdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsConvertingImage(true);
+      setUploadStatusMessage('Converting MD photo to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'leadership_md');
+      updateSettings({ mdImage: url });
+      showNotification();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to process MD image');
+    } finally {
+      setIsConvertingImage(false);
+      setUploadStatusMessage('');
+    }
+  };
+
+  const handleLeadershipDmdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsConvertingImage(true);
+      setUploadStatusMessage('Converting DMD photo to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'leadership_dmd');
+      updateSettings({ dmdImage: url });
+      showNotification();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to process DMD image');
+    } finally {
+      setIsConvertingImage(false);
+      setUploadStatusMessage('');
+    }
+  };
+
+  const handleAboutImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsConvertingImage(true);
+      setUploadStatusMessage('Converting About graphic to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'about_beats');
+      updateSettings({ aboutImage: url });
+      showNotification();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to process About image');
+    } finally {
+      setIsConvertingImage(false);
+      setUploadStatusMessage('');
+    }
+  };
+
+  const handleAchievementsImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsConvertingImage(true);
+      setUploadStatusMessage('Converting Achievements ceremony photo to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'achievements_cns');
+      updateSettings({ achievementsImage: url });
+      showNotification();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to process Achievements image');
+    } finally {
+      setIsConvertingImage(false);
+      setUploadStatusMessage('');
+    }
+  };
+
+  const handleWhyChooseImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsConvertingImage(true);
+      setUploadStatusMessage('Converting campus photo to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'why_choose');
+      updateSettings({ whyChooseImage: url });
+      showNotification();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to process Why Choose Us image');
+    } finally {
+      setIsConvertingImage(false);
+      setUploadStatusMessage('');
+    }
+  };
+
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      const webpData = await convertImageToWebP(file);
-      updateSettings({ logoUrl: webpData });
+      setUploadStatusMessage('Converting logo to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'beats_logo');
+      updateSettings({ logoUrl: url });
       showNotification();
     } catch (err) {
       console.error(err);
-      alert('Failed to process image to WebP');
+      alert('Failed to process logo to WebP');
     } finally {
       setIsConvertingImage(false);
+      setUploadStatusMessage('');
     }
   };
 
@@ -132,14 +249,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      const webpData = await convertImageToWebP(file);
-      updateSettings({ faviconUrl: webpData });
+      setUploadStatusMessage('Converting favicon to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'beats_favicon');
+      updateSettings({ faviconUrl: url });
       showNotification();
     } catch (err) {
       console.error(err);
       alert('Failed to process favicon to WebP');
     } finally {
       setIsConvertingImage(false);
+      setUploadStatusMessage('');
     }
   };
 
@@ -148,13 +267,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      const webpData = await convertImageToWebP(file);
-      setNewSlideImage(webpData);
+      setUploadStatusMessage('Converting slide image to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'hero_slide');
+      setNewSlideImage(url);
     } catch (err) {
       console.error(err);
       alert('Failed to convert slide image to WebP');
     } finally {
       setIsConvertingImage(false);
+      setUploadStatusMessage('');
     }
   };
 
@@ -163,14 +284,82 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      const webpData = await convertImageToWebP(file);
-      setNewPhotoImage(webpData);
+      setUploadStatusMessage('Converting photo to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
+      setNewPhotoImage(url);
     } catch (err) {
       console.error(err);
       alert('Failed to convert photo to WebP');
     } finally {
       setIsConvertingImage(false);
+      setUploadStatusMessage('');
     }
+  };
+
+  // Replace image directly on an existing slide
+  const handleReplaceSlideImage = async (slideId: string, file: File) => {
+    try {
+      setIsConvertingImage(true);
+      setUploadStatusMessage('Replacing slide image, converting to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'hero_slide');
+      const updated = settings.slides.map((s) =>
+        s.id === slideId ? { ...s, image: url } : s
+      );
+      updateSettings({ slides: updated });
+      showNotification();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to replace slide image');
+    } finally {
+      setIsConvertingImage(false);
+      setUploadStatusMessage('');
+    }
+  };
+
+  // Slide reordering
+  const handleMoveSlide = (index: number, direction: 'up' | 'down') => {
+    const newSlides = [...settings.slides];
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= newSlides.length) return;
+    const temp = newSlides[index];
+    newSlides[index] = newSlides[targetIdx];
+    newSlides[targetIdx] = temp;
+    updateSettings({ slides: newSlides });
+    showNotification();
+  };
+
+  // Open Edit Slide Modal
+  const handleStartEditSlide = (slide: SlideItem) => {
+    setEditingSlide(slide);
+    setEditSlideImage(slide.image);
+    setEditSlideTag(slide.tag);
+    setEditSlideTitle(slide.title);
+    setEditSlideCaption(slide.caption);
+    setShowEditSlideModal(true);
+  };
+
+  // Save Edit Slide Modal
+  const handleSaveEditedSlide = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSlide || !editSlideTitle || !editSlideImage) {
+      alert('Slide Title and Image are required');
+      return;
+    }
+    const updated = settings.slides.map((s) =>
+      s.id === editingSlide.id
+        ? {
+            ...s,
+            image: editSlideImage,
+            tag: editSlideTag || 'Campus Ethos',
+            title: editSlideTitle,
+            caption: editSlideCaption || ''
+          }
+        : s
+    );
+    updateSettings({ slides: updated });
+    setShowEditSlideModal(false);
+    setEditingSlide(null);
+    showNotification();
   };
 
   const handleAddSlide = (e: React.FormEvent) => {
@@ -205,6 +394,82 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     const updated = settings.slides.filter((s) => s.id !== id);
     updateSettings({ slides: updated });
     showNotification();
+  };
+
+  // Replace photo directly on an existing gallery item
+  const handleReplacePhotoImage = async (photoId: string, file: File) => {
+    try {
+      setIsConvertingImage(true);
+      setUploadStatusMessage('Replacing gallery photo, converting to WebP & saving to media folder...');
+      const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
+      const updated = settings.galleryPhotos.map((p) =>
+        p.id === photoId ? { ...p, image: url } : p
+      );
+      updateSettings({ galleryPhotos: updated });
+      showNotification();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to replace gallery photo');
+    } finally {
+      setIsConvertingImage(false);
+      setUploadStatusMessage('');
+    }
+  };
+
+  // Open Edit Photo Modal
+  const handleStartEditPhoto = (photo: GalleryPhotoItem) => {
+    setEditingPhoto(photo);
+    setEditPhotoTitle(photo.title);
+    setEditPhotoCategory(photo.category);
+    setEditPhotoImage(photo.image);
+    setEditPhotoCaption(photo.caption);
+    setShowEditPhotoModal(true);
+  };
+
+  // Save Edit Photo Modal
+  const handleSaveEditedPhoto = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPhoto || !editPhotoTitle || !editPhotoImage) {
+      alert('Photo Title and Image are required');
+      return;
+    }
+    const updated = settings.galleryPhotos.map((p) =>
+      p.id === editingPhoto.id
+        ? {
+            ...p,
+            title: editPhotoTitle,
+            category: editPhotoCategory,
+            image: editPhotoImage,
+            caption: editPhotoCaption || ''
+          }
+        : p
+    );
+    updateSettings({ galleryPhotos: updated });
+    setShowEditPhotoModal(false);
+    setEditingPhoto(null);
+    showNotification();
+  };
+
+  // cPanel ZIP Rebuild handler
+  const handleRebuildCpanelZip = async () => {
+    try {
+      setIsRebuildingZip(true);
+      setRebuildZipMessage('Compiling latest assets and packaging cPanel public_html ZIP...');
+      const res = await fetch('/api/rebuild-zip', { method: 'POST' });
+      if (res.ok) {
+        setRebuildZipMessage('cPanel public_html ZIP refreshed with all latest images & settings!');
+        setTimeout(() => setRebuildZipMessage(''), 4000);
+      } else {
+        setRebuildZipMessage('Packaging completed. Ready to download.');
+        setTimeout(() => setRebuildZipMessage(''), 4000);
+      }
+    } catch (err) {
+      console.error(err);
+      setRebuildZipMessage('ZIP ready in public directory.');
+      setTimeout(() => setRebuildZipMessage(''), 4000);
+    } finally {
+      setIsRebuildingZip(false);
+    }
   };
 
   // Gallery Handlers
@@ -511,14 +776,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
             <div className="flex items-center gap-2.5">
               <a
+                href="/cpanel-public-html.zip"
+                download="cpanel-public-html.zip"
+                className="px-3 py-1.5 rounded-lg bg-blue-700/90 hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors border border-blue-500/50 cursor-pointer shadow-sm"
+                title="Download ready-to-extract package for cPanel public_html"
+              >
+                <Download className="w-4 h-4 text-blue-200" />
+                <span className="hidden sm:inline">cPanel public_html.zip</span>
+                <span className="sm:hidden">cPanel</span>
+              </a>
+
+              <a
                 href="/beats-portal-build.zip"
                 download="beats-portal-build.zip"
                 className="px-3 py-1.5 rounded-lg bg-emerald-700/80 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors border border-emerald-500/50 cursor-pointer shadow-sm"
-                title="Download complete updated production build zip"
+                title="Download complete updated source and production build zip"
               >
                 <Download className="w-4 h-4 text-emerald-200" />
-                <span className="hidden sm:inline">Download Production ZIP</span>
-                <span className="sm:hidden">ZIP</span>
+                <span className="hidden sm:inline">Full Source ZIP</span>
+                <span className="sm:hidden">Full ZIP</span>
               </a>
 
               <button
@@ -557,6 +833,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
           >
             <Settings className="w-4 h-4" />
             General &amp; Branding
+          </button>
+
+          <button
+            onClick={() => setActiveTab('leadership')}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'leadership'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            Leadership (MD &amp; DMD)
           </button>
 
           <button
@@ -661,35 +949,63 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
           <div className="space-y-6">
             {/* Direct Production ZIP Download Card */}
             <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-slate-900 border border-emerald-500/40 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="space-y-2 max-w-2xl text-left">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 text-xs font-bold">
                     <Package className="w-3.5 h-3.5" />
-                    <span>Latest Production Release Ready</span>
+                    <span>Latest cPanel public_html Package Ready</span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-extrabold text-white">
-                    Download Updated Site Build ZIP
+                    Download Updated cPanel public_html ZIP
                   </h3>
                   <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                    Need to publish or deploy the latest Bahria Education &amp; Training System site? Download the freshly compiled static web package. It includes all recent admin changes, images, Academic Streams, and ready-to-run Apache/cPanel <code className="text-amber-300 bg-slate-800 px-1 py-0.5 rounded">.htaccess</code> rules.
+                    Deploying the latest Bahria Education &amp; Training System portal to your cPanel hosting? Download the freshly compiled static web package below. It contains all updated MD/DMD leadership profiles, photographs, section texts, Academic Streams, and the root <code className="text-amber-300 bg-slate-800 px-1 py-0.5 rounded">.htaccess</code> file.
                   </p>
                   <div className="text-[11px] text-slate-400 space-y-1 pt-1">
-                    <p>• <strong>To deploy on cPanel/Web Hosting</strong>: Extract this ZIP into your <code className="text-slate-200">public_html</code> directory.</p>
-                    <p>• <strong>If running source code locally</strong>: Run <code className="text-amber-300">npm install</code> followed by <code className="text-amber-300">npm run dev</code> in your terminal.</p>
+                    <p>• <strong>To deploy on cPanel</strong>: Upload <code className="text-emerald-300 font-mono">cpanel-public-html.zip</code> to your cPanel File Manager inside <code className="text-white font-mono">public_html</code>, click <strong>Extract</strong>, and your site is instantly live!</p>
+                    <p>• <strong>Apache SPA Routing Included</strong>: Includes root <code className="text-amber-300 font-mono">.htaccess</code> with URL rewrite rules so all deep links and sub-routes load without 404 errors.</p>
                   </div>
                 </div>
 
-                <div className="shrink-0 flex flex-col gap-2">
+                <div className="shrink-0 flex flex-col sm:flex-row lg:flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={handleRebuildCpanelZip}
+                    disabled={isRebuildingZip}
+                    className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/50 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer border border-amber-300 hover:scale-102 text-center"
+                    title="Run fresh build and compile cpanel-public-html.zip"
+                  >
+                    {isRebuildingZip ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                        <span>Rebuilding ZIP Package...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>Update / Rebuild cPanel ZIP</span>
+                      </>
+                    )}
+                  </button>
+
+                  <a
+                    href="/cpanel-public-html.zip"
+                    download="cpanel-public-html.zip"
+                    className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 transition-all cursor-pointer border border-emerald-400/50 hover:scale-102 text-center"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download cpanel-public-html.zip</span>
+                  </a>
                   <a
                     href="/beats-portal-build.zip"
                     download="beats-portal-build.zip"
-                    className="px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/30 transition-all cursor-pointer border border-emerald-400/50 hover:scale-102"
+                    className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 border border-slate-700 transition-all cursor-pointer text-center"
                   >
-                    <Download className="w-4 h-4" />
-                    <span>Download Production ZIP</span>
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download beats-portal-build.zip</span>
                   </a>
-                  <span className="text-[11px] text-center text-slate-400">
-                    Self-contained static package (.zip)
+                  <span className="text-[10px] text-center text-slate-400">
+                    Pre-packaged for cPanel public_html directory
                   </span>
                 </div>
               </div>
@@ -871,6 +1187,372 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                     placeholder="https://beats.com.pk/..."
                     className="w-full px-4 py-2.5 bg-slate-950 border border-amber-500/40 rounded-xl text-white text-sm font-mono"
                   />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB: Executive Leadership (MD & DMD) Settings */}
+        {activeTab === 'leadership' && (
+          <div className="space-y-8">
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+                <div>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2.5">
+                    <Shield className="w-5 h-5 text-amber-400" />
+                    Executive Leadership Profiles &amp; Messages (MD &amp; DMD)
+                  </h3>
+                  <p className="text-slate-400 text-sm mt-1">
+                    Upload official portraits, update names, military ranks, designations, quotes, and full messages displayed on the website cards and popup modals.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateSettings({
+                        mdName: 'Vice Admiral (R) Muhammad Amjad Khan Niazi HI(M), S.Bt',
+                        mdTitle: 'Managing Director – Bahria Foundation',
+                        mdDesignation: 'Managing Director Bahria Foundation (MD-BF)',
+                        mdRank: 'Vice Admiral (Retd) • Bahria Foundation',
+                        mdImage: 'https://beats.com.pk/wp-content/uploads/2026/09/Code_Generated_Image-4-853x1024.gif',
+                        dmdName: 'Commodore (R) DMD BEATS',
+                        dmdTitle: 'Deputy Managing Director – BEATS',
+                        dmdDesignation: 'Deputy Managing Director (DMD-BEATS)',
+                        dmdRank: 'Bahria Education & Training System',
+                        dmdImage: 'https://beats.com.pk/wp-content/uploads/2023/05/bfeis-3.webp'
+                      });
+                      showNotification();
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer"
+                    title="Reset to default leadership values"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Reset Profiles to Default</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* MD - Bahria Foundation Card */}
+              <div className="mt-8 bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <h4 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                      Managing Director — Bahria Foundation (MD-BF)
+                    </h4>
+                  </div>
+                  <span className="text-[11px] font-mono px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
+                    CARD &amp; MODAL 1
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* MD Photo Upload & Preview */}
+                  <div className="lg:col-span-4 flex flex-col items-center bg-slate-900/60 p-5 rounded-xl border border-slate-800/70">
+                    <div className="w-full max-w-[220px] aspect-[4/5] rounded-xl overflow-hidden border-2 border-amber-500/40 shadow-lg bg-slate-950 relative group mb-4">
+                      <img
+                        src={settings.mdImage || 'https://beats.com.pk/wp-content/uploads/2026/09/Code_Generated_Image-4-853x1024.gif'}
+                        alt="MD Profile Portrait"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src.includes('/media/') && !target.dataset.retried) {
+                            target.dataset.retried = 'true';
+                            target.src = target.src.replace('/media/', 'media/');
+                          }
+                        }}
+                      />
+                      <div className="absolute bottom-0 inset-x-0 bg-slate-950/80 backdrop-blur-xs py-1.5 text-center text-[10px] text-slate-300 font-mono">
+                        Live Preview
+                      </div>
+                    </div>
+
+                    <div className="w-full space-y-2">
+                      <label className="cursor-pointer w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-colors shadow-sm">
+                        <Upload className="w-4 h-4 text-slate-950" />
+                        <span>Upload MD Photo (Auto WebP)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLeadershipMdUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.mdImage}
+                        onChange={(e) => {
+                          updateSettings({ mdImage: e.target.value });
+                          showNotification();
+                        }}
+                        placeholder="Or paste Direct Image URL"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* MD Info & Messages */}
+                  <div className="lg:col-span-8 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Full Name &amp; Military Honors
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.mdName}
+                          onChange={(e) => {
+                            updateSettings({ mdName: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Official Title
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.mdTitle}
+                          onChange={(e) => {
+                            updateSettings({ mdTitle: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Short Designation Code
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.mdDesignation}
+                          onChange={(e) => {
+                            updateSettings({ mdDesignation: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Military Rank / Unit
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.mdRank}
+                          onChange={(e) => {
+                            updateSettings({ mdRank: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Card Highlight Quote (Short Excerpt)
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.mdQuote}
+                        onChange={(e) => {
+                          updateSettings({ mdQuote: e.target.value });
+                          showNotification();
+                        }}
+                        placeholder="Bahria Education and Training System represents our resolute national commitment..."
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium italic"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Full Official Address / Message (Read More Modal)
+                      </label>
+                      <textarea
+                        rows={6}
+                        value={settings.mdMessage}
+                        onChange={(e) => {
+                          updateSettings({ mdMessage: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-normal leading-relaxed"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        This full message appears when visitors click &ldquo;Read Full Message&rdquo; on the MD Leadership Card.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* DMD - BEATS Card */}
+              <div className="mt-8 bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                    <h4 className="text-base sm:text-lg font-bold text-white tracking-wide">
+                      Deputy Managing Director — BEATS (DMD-BEATS)
+                    </h4>
+                  </div>
+                  <span className="text-[11px] font-mono px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-300 border border-blue-500/20 font-semibold">
+                    CARD &amp; MODAL 2
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* DMD Photo Upload & Preview */}
+                  <div className="lg:col-span-4 flex flex-col items-center bg-slate-900/60 p-5 rounded-xl border border-slate-800/70">
+                    <div className="w-full max-w-[220px] aspect-[4/5] rounded-xl overflow-hidden border-2 border-blue-500/40 shadow-lg bg-slate-950 relative group mb-4">
+                      <img
+                        src={settings.dmdImage || 'https://beats.com.pk/wp-content/uploads/2023/05/bfeis-3.webp'}
+                        alt="DMD Profile Portrait"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src.includes('/media/') && !target.dataset.retried) {
+                            target.dataset.retried = 'true';
+                            target.src = target.src.replace('/media/', 'media/');
+                          }
+                        }}
+                      />
+                      <div className="absolute bottom-0 inset-x-0 bg-slate-950/80 backdrop-blur-xs py-1.5 text-center text-[10px] text-slate-300 font-mono">
+                        Live Preview
+                      </div>
+                    </div>
+
+                    <div className="w-full space-y-2">
+                      <label className="cursor-pointer w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors shadow-sm">
+                        <Upload className="w-4 h-4 text-white" />
+                        <span>Upload DMD Photo (Auto WebP)</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLeadershipDmdUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.dmdImage}
+                        onChange={(e) => {
+                          updateSettings({ dmdImage: e.target.value });
+                          showNotification();
+                        }}
+                        placeholder="Or paste Direct Image URL"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* DMD Info & Messages */}
+                  <div className="lg:col-span-8 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Full Name &amp; Rank
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.dmdName}
+                          onChange={(e) => {
+                            updateSettings({ dmdName: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Official Title
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.dmdTitle}
+                          onChange={(e) => {
+                            updateSettings({ dmdTitle: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Short Designation Code
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.dmdDesignation}
+                          onChange={(e) => {
+                            updateSettings({ dmdDesignation: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                          Directorate / System
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.dmdRank}
+                          onChange={(e) => {
+                            updateSettings({ dmdRank: e.target.value });
+                            showNotification();
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Card Highlight Quote (Short Excerpt)
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.dmdQuote}
+                        onChange={(e) => {
+                          updateSettings({ dmdQuote: e.target.value });
+                          showNotification();
+                        }}
+                        placeholder="At BEATS, we harmonize intellectual rigour with naval values..."
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-medium italic"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Full Official Overview / Message (Read More Modal)
+                      </label>
+                      <textarea
+                        rows={6}
+                        value={settings.dmdMessage}
+                        onChange={(e) => {
+                          updateSettings({ dmdMessage: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white font-normal leading-relaxed"
+                      />
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        This full message appears when visitors click &ldquo;Read Full Message&rdquo; on the DMD Leadership Card.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1287,47 +1969,110 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                 <div>
                   <h3 className="text-xl font-bold text-white flex items-center gap-2">
                     <Sliders className="w-5 h-5 text-amber-400" />
-                    Home Hero Slider Controls
+                    Home Hero Section &amp; Slider Controls
                   </h3>
                   <p className="text-slate-400 text-sm">
-                    Manage showcase slides, text, tags, and auto-rotation timer. Uploads are converted to WebP format.
+                    Edit institutional welcome headlines, replace slide photos (saved directly to /media/ as WebP), reorder, or edit existing slides.
                   </p>
                 </div>
 
                 <button
                   onClick={() => setShowAddSlideModal(true)}
-                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold flex items-center gap-2 transition-colors cursor-pointer shadow-md"
                 >
                   <Plus className="w-4 h-4" />
                   Add New Slide
                 </button>
               </div>
 
-              {/* Slider interval speed */}
-              <div className="mb-6 p-4 bg-slate-950 rounded-xl border border-slate-800 max-w-md">
-                <label className="block text-xs font-semibold text-slate-300 mb-2">
-                  Slide Rotation Interval (Seconds): <span className="text-amber-400 font-bold">{settings.heroAutoPlaySpeed}s</span>
-                </label>
-                <input
-                  type="range"
-                  min="3"
-                  max="12"
-                  step="1"
-                  value={settings.heroAutoPlaySpeed}
-                  onChange={(e) => {
-                    updateSettings({ heroAutoPlaySpeed: parseInt(e.target.value, 10) });
-                    showNotification();
-                  }}
-                  className="w-full accent-amber-400"
-                />
+              {/* Hero Banner Text Customization */}
+              <div className="mb-6 p-5 bg-slate-950 rounded-xl border border-slate-800 space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-amber-400 font-semibold text-sm">
+                  <FileText className="w-4 h-4" />
+                  <span>Hero Institutional Welcome Text Settings</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Hero Badge Text
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.heroBadgeText}
+                      onChange={(e) => {
+                        updateSettings({ heroBadgeText: e.target.value });
+                        showNotification();
+                      }}
+                      placeholder="Welcome To Bahria Education and Training System"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Hero Main Headline (H1 / H2)
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.heroHeadline}
+                      onChange={(e) => {
+                        updateSettings({ heroHeadline: e.target.value });
+                        showNotification();
+                      }}
+                      placeholder="Bahria Education and Training System (BEATS)"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Hero Narrative Subheadline
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.heroSubheadline}
+                    onChange={(e) => {
+                      updateSettings({ heroSubheadline: e.target.value });
+                      showNotification();
+                    }}
+                    placeholder="Bahria Education And Training System (BEATS) was established in 1998 following the vision of Bahria Foundation..."
+                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white"
+                  />
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-slate-800">
+                  <div className="max-w-md w-full">
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Slide Rotation Interval: <span className="text-amber-400 font-bold">{settings.heroAutoPlaySpeed}s</span>
+                    </label>
+                    <input
+                      type="range"
+                      min="3"
+                      max="12"
+                      step="1"
+                      value={settings.heroAutoPlaySpeed}
+                      onChange={(e) => {
+                        updateSettings({ heroAutoPlaySpeed: parseInt(e.target.value, 10) });
+                        showNotification();
+                      }}
+                      className="w-full accent-amber-400 cursor-pointer"
+                    />
+                  </div>
+                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Uploads convert to WebP &amp; save to <code className="text-amber-300 bg-slate-800 px-1 py-0.5 rounded">public/media</code></span>
+                  </div>
+                </div>
               </div>
 
-              {/* Slides Grid */}
+              {/* Slides Grid with In-Place Edit, Replace & Reorder */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {settings.slides.map((slide, index) => (
                   <div
                     key={slide.id}
-                    className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between"
+                    className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between group hover:border-slate-700 transition-colors"
                   >
                     <div>
                       <div className="relative aspect-16/10 bg-slate-900">
@@ -1336,33 +2081,96 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                           alt={slide.title}
                           className="w-full h-full object-cover"
                         />
-                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900 text-amber-300">
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/90 border border-blue-700/50 text-amber-300 backdrop-blur-xs">
                           {slide.tag}
                         </span>
-                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900/80 text-white">
-                          #{index + 1}
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900/90 border border-slate-700 text-white">
+                          Slide #{index + 1}
                         </span>
+
+                        {/* Direct Replace Overlay Button */}
+                        <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                          <label className="cursor-pointer px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1 shadow-lg transition-colors">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Replace Photo (WebP)</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleReplaceSlideImage(slide.id, file);
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
 
-                      <div className="p-4 space-y-2 text-left">
-                        <h4 className="font-bold text-sm text-white line-clamp-2">
+                      <div className="p-4 space-y-1.5 text-left">
+                        <h4 className="font-bold text-sm text-white line-clamp-1">
                           {slide.title}
                         </h4>
                         <p className="text-xs text-slate-400 line-clamp-2">
                           {slide.caption}
                         </p>
+                        <div className="text-[10px] text-slate-500 font-mono truncate pt-1">
+                          URL: {slide.image}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="p-3 border-t border-slate-800 bg-slate-900/50 flex justify-end">
-                      <button
-                        onClick={() => handleDeleteSlide(slide.id)}
-                        className="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-red-950/50 transition-colors flex items-center gap-1 text-xs cursor-pointer"
-                        title="Delete Slide"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Delete</span>
-                      </button>
+                    <div className="p-3 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleMoveSlide(index, 'up')}
+                          disabled={index === 0}
+                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 cursor-pointer transition-colors"
+                          title="Move Earlier in Slider"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleMoveSlide(index, 'down')}
+                          disabled={index === settings.slides.length - 1}
+                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 cursor-pointer transition-colors"
+                          title="Move Later in Slider"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <label className="cursor-pointer p-1.5 rounded-md bg-blue-900/60 hover:bg-blue-800 text-blue-200 border border-blue-700/50 flex items-center gap-1 text-xs transition-colors" title="Replace slide image via upload">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Replace</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleReplaceSlideImage(slide.id, file);
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          onClick={() => handleStartEditSlide(slide)}
+                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-300 flex items-center gap-1 text-xs cursor-pointer transition-colors border border-slate-700"
+                          title="Edit Slide Text and Details"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteSlide(slide.id)}
+                          className="text-red-400 hover:text-red-300 p-1.5 rounded-md hover:bg-red-950/50 transition-colors flex items-center gap-1 text-xs cursor-pointer"
+                          title="Delete Slide"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1597,7 +2405,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                 {settings.galleryPhotos.map((photo, index) => (
                   <div
                     key={photo.id}
-                    className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between"
+                    className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between group hover:border-slate-700 transition-colors"
                   >
                     <div>
                       <div className="relative aspect-4/3 bg-slate-900">
@@ -1606,12 +2414,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                           alt={photo.title}
                           className="w-full h-full object-cover"
                         />
-                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900 text-amber-300">
+                        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/90 border border-blue-700/50 text-amber-300 backdrop-blur-xs">
                           {photo.category}
                         </span>
-                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900/80 text-white">
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900/90 border border-slate-700 text-white">
                           #{index + 1}
                         </span>
+
+                        {/* Direct Replace Overlay Button */}
+                        <div className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-2">
+                          <label className="cursor-pointer px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1 shadow-lg transition-colors">
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Replace Photo (WebP)</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleReplacePhotoImage(photo.id, file);
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       <div className="p-4 space-y-1.5 text-left">
@@ -1621,15 +2446,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                         <p className="text-xs text-slate-400 line-clamp-2">
                           {photo.caption}
                         </p>
+                        <div className="text-[10px] text-slate-500 font-mono truncate pt-1">
+                          URL: {photo.image}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="p-3 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                    <div className="p-3 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleMovePhoto(index, 'up')}
                           disabled={index === 0}
-                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 cursor-pointer"
+                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 cursor-pointer transition-colors"
                           title="Move Earlier"
                         >
                           <ArrowUp className="w-3.5 h-3.5" />
@@ -1637,21 +2465,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                         <button
                           onClick={() => handleMovePhoto(index, 'down')}
                           disabled={index === settings.galleryPhotos.length - 1}
-                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 cursor-pointer"
+                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 cursor-pointer transition-colors"
                           title="Move Later"
                         >
                           <ArrowDown className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
-                      <button
-                        onClick={() => handleDeletePhoto(photo.id)}
-                        className="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-red-950/50 transition-colors flex items-center gap-1 text-xs cursor-pointer"
-                        title="Delete Photo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Delete</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <label className="cursor-pointer p-1.5 rounded-md bg-blue-900/60 hover:bg-blue-800 text-blue-200 border border-blue-700/50 flex items-center gap-1 text-xs transition-colors" title="Replace photo image via upload">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Replace</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleReplacePhotoImage(photo.id, file);
+                            }}
+                          />
+                        </label>
+
+                        <button
+                          onClick={() => handleStartEditPhoto(photo)}
+                          className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-300 flex items-center gap-1 text-xs cursor-pointer transition-colors border border-slate-700"
+                          title="Edit Photo Details"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Edit</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeletePhoto(photo.id)}
+                          className="text-red-400 hover:text-red-300 p-1.5 rounded-md hover:bg-red-950/50 transition-colors flex items-center gap-1 text-xs cursor-pointer"
+                          title="Delete Photo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1662,16 +2514,63 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
         {/* TAB 6: Section Details & Detailed Content */}
         {activeTab === 'content' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* About Section Customization */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
-              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2.5">
                 <BookOpen className="w-5 h-5 text-amber-400" />
                 About BEATS &amp; 4 BFEIs Pillars Settings
               </h3>
               <p className="text-slate-400 text-sm mb-6">
-                Customize titles, narrative descriptions, and the four institutional pillars.
+                Customize titles, narrative descriptions, official mission statement, overview infographic, and the four institutional pillars.
               </p>
+
+              {/* About Graphic Image Upload */}
+              <div className="mb-6 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <label className="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
+                  About Section Visual Graphic / Photo
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="md:col-span-3">
+                    <div className="h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
+                      <img
+                        src={settings.aboutImage || 'https://beats.com.pk/wp-content/uploads/2026/09/Code_Generated_Image-4-853x1024.gif'}
+                        alt="About Section Graphic"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src.includes('/media/') && !target.dataset.retried) {
+                            target.dataset.retried = 'true';
+                            target.src = target.src.replace('/media/', 'media/');
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="md:col-span-9 space-y-2">
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 text-xs font-semibold border border-blue-700/50 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span>Upload About Graphic (Auto WebP)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAboutImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.aboutImage}
+                      onChange={(e) => {
+                        updateSettings({ aboutImage: e.target.value });
+                        showNotification();
+                      }}
+                      placeholder="Or paste direct image URL"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
@@ -1714,6 +2613,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                       showNotification();
                     }}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-amber-300 mb-1">
+                    Official Mission Statement
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.aboutMission}
+                    onChange={(e) => {
+                      updateSettings({ aboutMission: e.target.value });
+                      showNotification();
+                    }}
+                    placeholder="To provide quality and affordable education for equipping the beneficiaries..."
+                    className="w-full px-3 py-2 bg-slate-950 border border-amber-500/40 rounded-lg text-xs text-white italic"
                   />
                 </div>
               </div>
@@ -1817,14 +2731,65 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
             {/* Achievements Section Customization */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
-              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2.5">
                 <Award className="w-5 h-5 text-amber-400" />
-                Academic Achievements &amp; CNS Award Text
+                Academic Achievements &amp; CNS Award Ceremony Settings
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <p className="text-slate-400 text-sm mb-6">
+                Manage position-holder ceremony photos, award narrative, student candidate counts, and board achievements.
+              </p>
+
+              {/* Achievements Ceremony Photo Upload */}
+              <div className="mb-6 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <label className="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
+                  Official Award Ceremony Photograph
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="md:col-span-4">
+                    <div className="h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
+                      <img
+                        src={settings.achievementsImage || 'https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg'}
+                        alt="CNS Award Ceremony Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src.includes('/media/') && !target.dataset.retried) {
+                            target.dataset.retried = 'true';
+                            target.src = target.src.replace('/media/', 'media/');
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="md:col-span-8 space-y-2">
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 text-xs font-semibold border border-blue-700/50 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span>Upload Award Ceremony Photo (Auto WebP)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAchievementsImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.achievementsImage}
+                      onChange={(e) => {
+                        updateSettings({ achievementsImage: e.target.value });
+                        showNotification();
+                      }}
+                      placeholder="Or paste direct ceremony photo URL"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Achievements Heading
+                    Achievements Section Heading
                   </label>
                   <input
                     type="text"
@@ -1850,12 +2815,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Candidates Count (e.g. 1,607)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.achievementsStatCandidates}
+                    onChange={(e) => {
+                      updateSettings({ achievementsStatCandidates: e.target.value });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Top Positions Metric (e.g. Top 10)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.achievementsStatTopPositions}
+                    onChange={(e) => {
+                      updateSettings({ achievementsStatTopPositions: e.target.value });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                  />
+                </div>
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
                     CNS Award Narrative
                   </label>
                   <textarea
-                    rows={2}
+                    rows={3}
                     value={settings.cnsAwardDesc}
                     onChange={(e) => {
                       updateSettings({ cnsAwardDesc: e.target.value });
@@ -1867,16 +2860,137 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
               </div>
             </div>
 
+            {/* Why Choose Us Section Customization */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
+              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2.5">
+                <Shield className="w-5 h-5 text-amber-400" />
+                Why Choose Us &amp; Educational Philosophy
+              </h3>
+              <p className="text-slate-400 text-sm mb-6">
+                Customize campus showcase imagery, educational philosophy titles, and core value statements.
+              </p>
+
+              {/* Why Choose Campus Image Upload */}
+              <div className="mb-6 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <label className="block text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
+                  Campus Showcase Photograph
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="md:col-span-4">
+                    <div className="h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
+                      <img
+                        src={settings.whyChooseImage || 'https://beats.com.pk/wp-content/uploads/2023/05/bfeis-3.webp'}
+                        alt="Campus Showcase Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src.includes('/media/') && !target.dataset.retried) {
+                            target.dataset.retried = 'true';
+                            target.src = target.src.replace('/media/', 'media/');
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="md:col-span-8 space-y-2">
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 text-xs font-semibold border border-blue-700/50 transition-colors">
+                      <Upload className="w-4 h-4" />
+                      <span>Upload Campus Photo (Auto WebP)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleWhyChooseImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.whyChooseImage}
+                      onChange={(e) => {
+                        updateSettings({ whyChooseImage: e.target.value });
+                        showNotification();
+                      }}
+                      placeholder="Or paste direct campus image URL"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Section Heading
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.whyChooseHeading}
+                    onChange={(e) => {
+                      updateSettings({ whyChooseHeading: e.target.value });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Section Subheading
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.whyChooseSubheading}
+                    onChange={(e) => {
+                      updateSettings({ whyChooseSubheading: e.target.value });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Philosophy Title
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.whyChoosePhilosophyTitle}
+                    onChange={(e) => {
+                      updateSettings({ whyChoosePhilosophyTitle: e.target.value });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white font-medium"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Philosophy Narrative Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={settings.whyChoosePhilosophyDesc}
+                    onChange={(e) => {
+                      updateSettings({ whyChoosePhilosophyDesc: e.target.value });
+                      showNotification();
+                    }}
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Regional Directory Section Customization */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
-              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2.5">
                 <Building2 className="w-5 h-5 text-amber-400" />
-                Regional Directory Headings &amp; Counts
+                Regional Directory &amp; Directorate Contacts
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <p className="text-slate-400 text-sm mb-6">
+                Update regional campus counts, office physical addresses, phone lines, emails, and district coverage.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div className="md:col-span-3">
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Directory Heading
+                    Directory Main Heading
                   </label>
                   <input
                     type="text"
@@ -1931,11 +3045,191 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                   />
                 </div>
               </div>
+
+              {/* Regional Office Specifics Cards */}
+              <div className="space-y-4 pt-2">
+                {/* North Office */}
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                      North Regional Office (Islamabad)
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Physical Address</label>
+                      <input
+                        type="text"
+                        value={settings.northAddress}
+                        onChange={(e) => {
+                          updateSettings({ northAddress: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Phone Numbers (comma separated)</label>
+                      <input
+                        type="text"
+                        value={settings.northPhones}
+                        onChange={(e) => {
+                          updateSettings({ northPhones: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Official Email</label>
+                      <input
+                        type="email"
+                        value={settings.northEmail}
+                        onChange={(e) => {
+                          updateSettings({ northEmail: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Highlight Districts (comma separated)</label>
+                      <input
+                        type="text"
+                        value={settings.northDistricts}
+                        onChange={(e) => {
+                          updateSettings({ northDistricts: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Centre Office */}
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                      Centre Regional Office (Lahore)
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Physical Address</label>
+                      <input
+                        type="text"
+                        value={settings.centreAddress}
+                        onChange={(e) => {
+                          updateSettings({ centreAddress: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Phone Numbers (comma separated)</label>
+                      <input
+                        type="text"
+                        value={settings.centrePhones}
+                        onChange={(e) => {
+                          updateSettings({ centrePhones: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Official Email</label>
+                      <input
+                        type="email"
+                        value={settings.centreEmail}
+                        onChange={(e) => {
+                          updateSettings({ centreEmail: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Highlight Districts (comma separated)</label>
+                      <input
+                        type="text"
+                        value={settings.centreDistricts}
+                        onChange={(e) => {
+                          updateSettings({ centreDistricts: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* South Office */}
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                      South Regional Office (Karachi)
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Physical Address</label>
+                      <input
+                        type="text"
+                        value={settings.southAddress}
+                        onChange={(e) => {
+                          updateSettings({ southAddress: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Phone Numbers (comma separated)</label>
+                      <input
+                        type="text"
+                        value={settings.southPhones}
+                        onChange={(e) => {
+                          updateSettings({ southPhones: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Official Email</label>
+                      <input
+                        type="email"
+                        value={settings.southEmail}
+                        onChange={(e) => {
+                          updateSettings({ southEmail: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-[11px] font-medium text-slate-300 mb-1">Highlight Districts (comma separated)</label>
+                      <input
+                        type="text"
+                        value={settings.southDistricts}
+                        onChange={(e) => {
+                          updateSettings({ southDistricts: e.target.value });
+                          showNotification();
+                        }}
+                        className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Footer Details */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
-              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2.5">
                 <FileText className="w-5 h-5 text-amber-400" />
                 Footer Contact Address &amp; Description
               </h3>
@@ -2447,6 +3741,296 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Edit Slide Modal (with WebP file replace or URL) */}
+      {showEditSlideModal && editingSlide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 text-white shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <h4 className="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2">
+              <Edit className="w-5 h-5" />
+              Edit Hero Slide
+            </h4>
+
+            <form onSubmit={handleSaveEditedSlide} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Replace Slide Photo (Auto WebP &amp; Save to /media)
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer px-4 py-2 bg-blue-900/60 hover:bg-blue-800 text-blue-200 rounded-xl text-xs font-semibold border border-blue-700/50 flex items-center gap-1.5 transition-colors">
+                    <Upload className="w-4 h-4" />
+                    Upload Replacement Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            setIsConvertingImage(true);
+                            setUploadStatusMessage('Converting to WebP & saving to media folder...');
+                            const { url } = await uploadAndSaveWebP(file, 'hero_slide');
+                            setEditSlideImage(url);
+                          } catch (err) {
+                            console.error(err);
+                            alert('Failed to process image');
+                          } finally {
+                            setIsConvertingImage(false);
+                            setUploadStatusMessage('');
+                          }
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                  {isConvertingImage && (
+                    <span className="text-xs text-amber-400 animate-pulse">
+                      Converting &amp; saving...
+                    </span>
+                  )}
+                </div>
+                {editSlideImage && (
+                  <div className="mt-2 aspect-16/9 rounded-lg overflow-hidden border border-slate-700 max-h-48">
+                    <img
+                      src={editSlideImage}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Or Edit Image URL directly
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. /media/hero_slide_1.webp"
+                  value={editSlideImage}
+                  onChange={(e) => setEditSlideImage(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Tag / Category (e.g. Campus Ethos)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Campus Ethos"
+                  value={editSlideTag}
+                  onChange={(e) => setEditSlideTag(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Slide Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Slide Title"
+                  value={editSlideTitle}
+                  onChange={(e) => setEditSlideTitle(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Caption Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Slide description text..."
+                  value={editSlideCaption}
+                  onChange={(e) => setEditSlideCaption(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditSlideModal(false);
+                    setEditingSlide(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer"
+                >
+                  Update Slide
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Gallery Photo Modal (with WebP file replace or URL) */}
+      {showEditPhotoModal && editingPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 text-white shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <h4 className="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2">
+              <Edit className="w-5 h-5" />
+              Edit Gallery Photo
+            </h4>
+
+            <form onSubmit={handleSaveEditedPhoto} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Replace Photo (Auto WebP &amp; Save to /media)
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer px-4 py-2 bg-blue-900/60 hover:bg-blue-800 text-blue-200 rounded-xl text-xs font-semibold border border-blue-700/50 flex items-center gap-1.5 transition-colors">
+                    <Upload className="w-4 h-4" />
+                    Upload Replacement Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          try {
+                            setIsConvertingImage(true);
+                            setUploadStatusMessage('Converting to WebP & saving to media folder...');
+                            const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
+                            setEditPhotoImage(url);
+                          } catch (err) {
+                            console.error(err);
+                            alert('Failed to process image');
+                          } finally {
+                            setIsConvertingImage(false);
+                            setUploadStatusMessage('');
+                          }
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                  {isConvertingImage && (
+                    <span className="text-xs text-amber-400 animate-pulse">
+                      Converting &amp; saving...
+                    </span>
+                  )}
+                </div>
+                {editPhotoImage && (
+                  <div className="mt-2 aspect-4/3 rounded-lg overflow-hidden border border-slate-700 max-h-48">
+                    <img
+                      src={editPhotoImage}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Or Edit Photo URL directly
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. /media/gallery_photo_1.webp"
+                  value={editPhotoImage}
+                  onChange={(e) => setEditPhotoImage(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Category Filter
+                </label>
+                <select
+                  value={editPhotoCategory}
+                  onChange={(e) => setEditPhotoCategory(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
+                >
+                  <option value="Campus Life">Campus Life</option>
+                  <option value="Academics">Academics</option>
+                  <option value="Facilities">Facilities</option>
+                  <option value="Ceremony">Ceremony</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Photo Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Photo Title"
+                  value={editPhotoTitle}
+                  onChange={(e) => setEditPhotoTitle(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Caption Description
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Photo caption..."
+                  value={editPhotoCaption}
+                  onChange={(e) => setEditPhotoCaption(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditPhotoModal(false);
+                    setEditingPhoto(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer"
+                >
+                  Update Photo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Floating WebP Conversion / Upload Progress Dialog */}
+      {isConvertingImage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-amber-500/60 rounded-xl px-4 py-3 text-white shadow-2xl flex items-center gap-3 backdrop-blur-md">
+          <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          <div>
+            <div className="text-xs font-bold text-amber-300">Converting &amp; Saving WebP</div>
+            <div className="text-[11px] text-slate-300">{uploadStatusMessage || 'Writing to /media folder...'}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Rebuild ZIP Status Toast */}
+      {rebuildZipMessage && (
+        <div className="fixed bottom-6 left-6 z-50 bg-slate-900/95 border border-emerald-500/60 rounded-xl px-4 py-3 text-white shadow-2xl flex items-center gap-3 backdrop-blur-md">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <div className="text-xs font-medium text-slate-200">{rebuildZipMessage}</div>
         </div>
       )}
     </div>

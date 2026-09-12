@@ -202,23 +202,27 @@ export const MainSlider: React.FC<MainSliderProps> = ({
                   className="group flex items-center gap-3 p-2.5 rounded-xl bg-slate-900/60 hover:bg-blue-950/80 border border-slate-800/80 hover:border-amber-500/40 transition-all cursor-pointer"
                 >
                   <img
-                    src="https://beats.com.pk/wp-content/uploads/2024/12/md-PIC-.jpg"
-                    alt="MD-BF"
+                    src={settings.mdImage || 'https://beats.com.pk/wp-content/uploads/2024/12/md-PIC-.jpg'}
+                    alt={settings.mdName || 'MD-BF'}
                     className="w-13 h-13 rounded-lg object-cover border border-amber-400/40 shrink-0 group-hover:scale-105 transition-transform"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=200';
+                      const target = e.currentTarget;
+                      if (target.src.includes('/media/') && !target.dataset.retried) {
+                        target.dataset.retried = 'true';
+                        target.src = target.src.replace('/media/', 'media/');
+                      }
                     }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors truncate">
-                        Managing Director (MD-BF)
+                        {settings.mdTitle || 'Managing Director (MD-BF)'}
                       </h4>
                       <span className="text-[9px] bg-blue-900/90 text-amber-300 px-1.5 py-0.5 rounded font-bold">
                         Message
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-300 truncate">Vice Admiral (Retd) • Bahria Foundation</p>
+                    <p className="text-[11px] text-slate-300 truncate">{settings.mdRank || 'Vice Admiral (Retd) • Bahria Foundation'}</p>
                     <span className="text-[10px] text-amber-400/90 flex items-center gap-1 mt-0.5">
                       <MessageSquare className="w-2.5 h-2.5" /> Read Leadership Address
                     </span>
@@ -231,23 +235,27 @@ export const MainSlider: React.FC<MainSliderProps> = ({
                   className="group flex items-center gap-3 p-2.5 rounded-xl bg-slate-900/60 hover:bg-blue-950/80 border border-slate-800/80 hover:border-sky-500/40 transition-all cursor-pointer"
                 >
                   <img
-                    src="https://beats.com.pk/wp-content/uploads/2026/09/wordpress_image-931x1024.png"
-                    alt="DMD-BEATS"
+                    src={settings.dmdImage || 'https://beats.com.pk/wp-content/uploads/2026/09/wordpress_image-931x1024.png'}
+                    alt={settings.dmdName || 'DMD-BEATS'}
                     className="w-13 h-13 rounded-lg object-cover border border-sky-400/40 shrink-0 group-hover:scale-105 transition-transform"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200';
+                      const target = e.currentTarget;
+                      if (target.src.includes('/media/') && !target.dataset.retried) {
+                        target.dataset.retried = 'true';
+                        target.src = target.src.replace('/media/', 'media/');
+                      }
                     }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors truncate">
-                        Deputy MD (DMD-BEATS)
+                        {settings.dmdTitle || 'Deputy MD (DMD-BEATS)'}
                       </h4>
                       <span className="text-[9px] bg-sky-950 text-sky-300 px-1.5 py-0.5 rounded font-bold border border-sky-800">
                         Director
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-300 truncate">Bahria Education &amp; Training System</p>
+                    <p className="text-[11px] text-slate-300 truncate">{settings.dmdRank || 'Bahria Education & Training System'}</p>
                     <span className="text-[10px] text-sky-400/90 flex items-center gap-1 mt-0.5">
                       <MessageSquare className="w-2.5 h-2.5" /> Operational Overview
                     </span>
