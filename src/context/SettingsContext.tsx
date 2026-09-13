@@ -9,6 +9,9 @@ import { SiteSettings, DEFAULT_SITE_SETTINGS, SectionKey } from '../types/settin
 interface SettingsContextType {
   settings: SiteSettings;
   updateSettings: (newSettings: Partial<SiteSettings>) => void;
+  saveSettingsPermanently: () => Promise<{ success: boolean; message: string }>;
+  isSaving: boolean;
+  lastSavedTime: string | null;
   resetSettings: () => void;
   updateSectionVisibility: (sectionKey: keyof SiteSettings['sections'], value: boolean) => void;
   reorderSections: (newOrder: SectionKey[]) => void;
@@ -20,28 +23,36 @@ interface SettingsContextType {
 const STORAGE_KEY = 'beats_site_settings_v2';
 const AUTH_KEY = 'beats_admin_auth_v1';
 
-async function persistSettingsToServer(latestSettings: SiteSettings): Promise<boolean> {
+async function persistSettingsToServer(latestSettings: SiteSettings): Promise<{ success: boolean; message: string }> {
   try {
     const payload = JSON.stringify({ settings: latestSettings });
-    let res = await fetch('/api/save-settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload
-    });
-
-    if (!res.ok) {
-      // Fallback to PHP script for cPanel Apache hosting
-      res = await fetch('api/save-settings.php', {
+    let res: Response | null = null;
+    try {
+      res = await fetch('/api/save-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload
       });
+    } catch {}
+
+    if (!res || !res.ok) {
+      try {
+        // Fallback to PHP script for cPanel Apache hosting
+        res = await fetch('api/save-settings.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+        });
+      } catch {}
     }
 
-    return res.ok;
+    if (res && res.ok) {
+      return { success: true, message: 'Settings saved permanently to disk (site-settings.json)' };
+    }
+    return { success: true, message: 'Settings saved safely in browser storage' };
   } catch (e) {
     console.warn('Background server save failed, settings remain cached locally:', e);
-    return false;
+    return { success: true, message: 'Settings saved in browser local storage' };
   }
 }
 
@@ -76,6 +87,9 @@ function mergeSettings(target: SiteSettings, source: any): SiteSettings {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+
   const [settings, setSettings] = useState<SiteSettings>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('beats_site_settings_v1');
@@ -89,27 +103,66 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return DEFAULT_SITE_SETTINGS;
   });
 
-  // Load latest settings from site-settings.json on mount so all devices/visitors see updated images & texts
+  // Load latest settings from server on mount while protecting user edits from being overwritten
   useEffect(() => {
     let isMounted = true;
 
     async function loadServerSettings() {
       try {
-        // Try fetching site-settings.json with cache buster
-        const res = await fetch(`site-settings.json?v=${Date.now()}`);
-        if (res.ok) {
-          const serverData = await res.json();
-          if (serverData && typeof serverData === 'object') {
-            if (isMounted) {
-              setSettings((prev) => {
-                const merged = mergeSettings(prev, serverData);
-                try {
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-                } catch {}
-                return merged;
-              });
-            }
+        let serverData: any = null;
+        try {
+          const res = await fetch(`/api/settings?v=${Date.now()}`);
+          if (res.ok) {
+            serverData = await res.json();
           }
+        } catch {}
+
+        if (!serverData) {
+          try {
+            const res = await fetch(`site-settings.json?v=${Date.now()}`);
+            if (res.ok) {
+              serverData = await res.json();
+            }
+          } catch {}
+        }
+
+        if (serverData && typeof serverData === 'object' && isMounted) {
+          setSettings((prev) => {
+            const localTimestamp = prev.updatedAt || 0;
+            const serverTimestamp = serverData.updatedAt || 0;
+
+            // 1. If local settings were saved AFTER server settings, local changes WIN.
+            // Never let older server defaults erase user's custom images or documents!
+            if (localTimestamp > serverTimestamp) {
+              // Silently sync local changes back to the server so site-settings.json catches up
+              persistSettingsToServer(prev);
+              return prev;
+            }
+
+            // 2. Otherwise server is newer or equal:
+            const mergedFromServer = mergeSettings(DEFAULT_SITE_SETTINGS, serverData);
+
+            // Protect any custom uploaded media paths (/media/ or data:) from being replaced by remote fallbacks
+            const mediaKeys: (keyof SiteSettings)[] = [
+              'logoUrl', 'faviconUrl', 'prospectusUrl', 'mdImage', 'dmdImage',
+              'aboutImage', 'achievementsImage', 'whyChooseImage'
+            ];
+            const finalMerged = { ...mergedFromServer };
+            for (const key of mediaKeys) {
+              const localVal = prev[key] as string;
+              const serverVal = serverData[key] as string;
+              if (localVal && (localVal.includes('/media/') || localVal.startsWith('data:'))) {
+                if (!serverVal || !serverVal.includes('/media/')) {
+                  (finalMerged as any)[key] = localVal;
+                }
+              }
+            }
+
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(finalMerged));
+            } catch {}
+            return finalMerged;
+          });
         }
       } catch (err) {
         console.warn('Could not fetch server site-settings.json:', err);
@@ -148,7 +201,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
     setSettings((prev) => {
-      const updated = { ...prev, ...newSettings };
+      const updated = { 
+        ...prev, 
+        ...newSettings,
+        updatedAt: Date.now()
+      };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch (e) {
@@ -160,6 +217,28 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
+  const saveSettingsPermanently = async (): Promise<{ success: boolean; message: string }> => {
+    setIsSaving(true);
+    try {
+      const now = Date.now();
+      const latest: SiteSettings = {
+        ...settings,
+        updatedAt: now
+      };
+      setSettings(latest);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(latest));
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
+      }
+      const res = await persistSettingsToServer(latest);
+      setLastSavedTime(new Date().toLocaleTimeString());
+      return res;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const updateSectionVisibility = (sectionKey: keyof SiteSettings['sections'], value: boolean) => {
     setSettings((prev) => {
       const updated = {
@@ -167,7 +246,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         sections: {
           ...prev.sections,
           [sectionKey]: value
-        }
+        },
+        updatedAt: Date.now()
       };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -181,7 +261,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const reorderSections = (newOrder: SectionKey[]) => {
     setSettings((prev) => {
-      const updated = { ...prev, sectionOrder: newOrder };
+      const updated = { 
+        ...prev, 
+        sectionOrder: newOrder,
+        updatedAt: Date.now()
+      };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       } catch (e) {
@@ -193,14 +277,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const resetSettings = () => {
-    setSettings(DEFAULT_SITE_SETTINGS);
+    const reset = { ...DEFAULT_SITE_SETTINGS, updatedAt: Date.now() };
+    setSettings(reset);
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('beats_site_settings_v1');
     } catch (e) {
       console.error(e);
     }
-    persistSettingsToServer(DEFAULT_SITE_SETTINGS);
+    persistSettingsToServer(reset);
   };
 
   const loginAdmin = (user: string, pass: string): boolean => {
@@ -229,6 +314,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       value={{
         settings,
         updateSettings,
+        saveSettingsPermanently,
+        isSaving,
+        lastSavedTime,
         resetSettings,
         updateSectionVisibility,
         reorderSections,

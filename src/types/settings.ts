@@ -61,6 +61,7 @@ export interface SectionVisibility {
 }
 
 export interface SiteSettings {
+  updatedAt?: number;
   // Brand identity
   siteTitle: string;
   tagline: string;
@@ -314,6 +315,7 @@ export const DEFAULT_SECTION_ORDER: SectionKey[] = [
 ];
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
+  updatedAt: 0,
   siteTitle: 'Bahria Education & Training System',
   tagline: 'A Prestigious Education Network Under Bahria Foundation (Pakistan Navy)',
   logoUrl: 'https://beats.com.pk/wp-content/uploads/2023/04/beats-bahria-logo-300x112-1.webp',

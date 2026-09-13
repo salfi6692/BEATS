@@ -142,3 +142,75 @@ export function formatBytes(bytes: number, decimals = 1): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
+
+/**
+ * Uploads any document/file (e.g. PDF, Word, Excel) to the server's public/media directory.
+ * Preserves the original file extension and returns the clean URL (/media/filename.ext).
+ */
+export async function uploadDocumentFile(
+  file: File,
+  filenamePrefix = 'doc'
+): Promise<{ url: string; filename: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64DataUrl = e.target?.result as string;
+      const originalExt = file.name.split('.').pop() || 'pdf';
+      let baseName = file.name.replace(/\.[^/.]+$/, '').trim();
+      baseName = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '');
+
+      if (filenamePrefix) {
+        baseName = `${filenamePrefix}_${baseName}`;
+      }
+
+      const shortTimestamp = Math.floor(Date.now() / 1000).toString().slice(-4);
+      const filename = `${baseName || 'document'}_${shortTimestamp}.${originalExt}`;
+
+      try {
+        const payload = JSON.stringify({
+          filename,
+          base64: base64DataUrl
+        });
+
+        let res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+        });
+
+        if (!res.ok) {
+          res = await fetch('api/upload.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+          });
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.url) {
+            const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+            resolve({
+              url: finalUrl,
+              filename: data.filename || filename
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Document server upload failed, falling back to data URL:', err);
+      }
+
+      resolve({
+        url: base64DataUrl,
+        filename
+      });
+    };
+    reader.onerror = () => reject(new Error('Failed to read document file'));
+    reader.readAsDataURL(file);
+  });
+}

@@ -30,6 +30,9 @@ function mediaUploaderPlugin(): Plugin {
                 '.jpeg': 'image/jpeg',
                 '.svg': 'image/svg+xml',
                 '.gif': 'image/gif',
+                '.pdf': 'application/pdf',
+                '.doc': 'application/msword',
+                '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 '.txt': 'text/plain',
                 '.json': 'application/json'
               };
@@ -51,10 +54,23 @@ function mediaUploaderPlugin(): Plugin {
           req.on('end', () => {
             try {
               const parsed = JSON.parse(body);
-              const settingsToSave = parsed.settings || parsed;
-              const jsonStr = JSON.stringify(settingsToSave, null, 2);
+              const incoming = parsed.settings || parsed;
 
               const publicSettingsPath = path.resolve(process.cwd(), 'public/site-settings.json');
+              let existing = {};
+              if (fs.existsSync(publicSettingsPath)) {
+                try {
+                  existing = JSON.parse(fs.readFileSync(publicSettingsPath, 'utf8'));
+                } catch {}
+              }
+
+              const settingsToSave = {
+                ...existing,
+                ...incoming,
+                updatedAt: (incoming.updatedAt && incoming.updatedAt > 0) ? incoming.updatedAt : Date.now()
+              };
+              const jsonStr = JSON.stringify(settingsToSave, null, 2);
+
               fs.writeFileSync(publicSettingsPath, jsonStr, 'utf8');
 
               const distDir = path.resolve(process.cwd(), 'dist');
@@ -66,7 +82,8 @@ function mediaUploaderPlugin(): Plugin {
               res.setHeader('Content-Type', 'application/json');
               res.end(JSON.stringify({
                 success: true,
-                message: 'Settings saved permanently to disk (site-settings.json)'
+                message: 'Settings saved permanently to disk (site-settings.json)',
+                updatedAt: settingsToSave.updatedAt
               }));
             } catch (err: any) {
               res.statusCode = 500;

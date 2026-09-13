@@ -40,7 +40,7 @@ if (!$mediaDir) {
 // Extract and sanitize filename
 $filename = isset($data['filename']) ? trim($data['filename']) : ('media_' . time() . '.webp');
 $filename = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $filename);
-if (!preg_match('/\.webp$/i', $filename)) {
+if (!preg_match('/\.(webp|png|jpg|jpeg|gif|svg|pdf|doc|docx)$/i', $filename)) {
     $filename = preg_replace('/\.[^.]+$/', '', $filename) . '.webp';
 }
 

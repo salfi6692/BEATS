@@ -30,10 +30,27 @@ if (!$data) {
 }
 
 // Extract settings object if wrapped in { settings: ... }
-$settings = isset($data['settings']) ? $data['settings'] : $data;
-$jsonString = json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
+$incoming = isset($data['settings']) ? $data['settings'] : $data;
 $targetFile = realpath(__DIR__ . '/..') . '/site-settings.json';
+
+// Read existing settings if available
+$existing = [];
+if (file_exists($targetFile)) {
+    $existingContent = file_get_contents($targetFile);
+    if ($existingContent) {
+        $decoded = json_decode($existingContent, true);
+        if (is_array($decoded)) {
+            $existing = $decoded;
+        }
+    }
+}
+
+$merged = array_merge($existing, $incoming);
+$merged['updatedAt'] = isset($incoming['updatedAt']) && $incoming['updatedAt'] > 0 
+    ? $incoming['updatedAt'] 
+    : (int)(microtime(true) * 1000);
+
+$jsonString = json_encode($merged, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
 if (file_put_contents($targetFile, $jsonString) !== false) {
     echo json_encode([
