@@ -75,6 +75,80 @@ export function sanitizeWebpFilename(originalName: string, prefix?: string): str
 }
 
 /**
+ * Uploads an image file directly (PNG, SVG, ICO, JPG, etc.) WITHOUT converting PNG to WebP.
+ * Preserves the original file extension, exact binary data, transparency, and crispness.
+ * Physically writes to /media/***** and returns { url: `/media/${filename}`, filename }.
+ */
+export async function uploadDirectImage(
+  file: File,
+  filenamePrefix = 'media'
+): Promise<{ url: string; filename: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target?.result as string;
+      const originalExt = (file.name.split('.').pop() || 'png').toLowerCase();
+      let baseName = file.name.replace(/\.[^/.]+$/, '').trim();
+      baseName = baseName
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '');
+
+      if (filenamePrefix) {
+        baseName = `${filenamePrefix}_${baseName}`;
+      }
+
+      const shortTimestamp = Math.floor(Date.now() / 1000).toString().slice(-4);
+      const filename = `${baseName || 'image'}_${shortTimestamp}.${originalExt}`;
+
+      try {
+        const payload = JSON.stringify({
+          filename,
+          base64: dataUrl
+        });
+
+        let res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload
+        });
+
+        if (!res.ok) {
+          res = await fetch('api/upload.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+          });
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.url) {
+            const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+            resolve({
+              url: finalUrl,
+              filename: data.filename || filename
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Direct image upload failed, falling back to data URL:', err);
+      }
+
+      // Fallback
+      resolve({
+        url: dataUrl,
+        filename
+      });
+    };
+    reader.onerror = () => reject(new Error('Failed to read image file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
  * Converts image to WebP and physically uploads/saves it into the server's public/media directory.
  * Returns the final URL (/media/filename.webp) and filename.
  */
@@ -83,6 +157,11 @@ export async function uploadAndSaveWebP(
   filenamePrefix?: string,
   quality = 0.85
 ): Promise<{ url: string; filename: string }> {
+  // If file is PNG, preserve original PNG format (do not convert to WebP)
+  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
+    return uploadDirectImage(file, filenamePrefix);
+  }
+
   // 1. Convert to WebP base64
   const webpDataUrl = await convertImageToWebP(file, quality);
   const filename = sanitizeWebpFilename(file.name, filenamePrefix);

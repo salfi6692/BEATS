@@ -1,7 +1,7 @@
 {
   "siteTitle": "Bahria Education & Training System",
   "tagline": "A Prestigious Education Network Under Bahria Foundation (Pakistan Navy)",
-  "logoUrl": "https://beats.com.pk/wp-content/uploads/2023/04/beats-bahria-logo-300x112-1.webp",
+  "logoUrl": "https://beats.com.pk/wp-content/uploads/2023/04/Beats-logo.png",
   "faviconUrl": "https://beats.com.pk/wp-content/uploads/2023/04/cropped-beats-fav-32x32.png",
   "navyThemeShade": "deep-navy",
   "fontSizeScale": "normal",
@@ -220,5 +220,5 @@
   "footerHelpline": "+92 51 8356193",
   "footerEmail": "info@beats.com.pk",
   "footerAddress": "Bahria Foundation, Head Office, H-8/4, Islamabad, Pakistan",
-  "updatedAt": 1789322037427
+  "updatedAt": 1789323156350
 }

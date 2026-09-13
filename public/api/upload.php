@@ -38,10 +38,10 @@ if (!$mediaDir) {
 }
 
 // Extract and sanitize filename
-$filename = isset($data['filename']) ? trim($data['filename']) : ('media_' . time() . '.webp');
+$filename = isset($data['filename']) ? trim($data['filename']) : ('media_' . time() . '.png');
 $filename = preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $filename);
-if (!preg_match('/\.(webp|png|jpg|jpeg|gif|svg|pdf|doc|docx)$/i', $filename)) {
-    $filename = preg_replace('/\.[^.]+$/', '', $filename) . '.webp';
+if (!preg_match('/\.(webp|png|jpg|jpeg|gif|svg|ico|pdf|doc|docx)$/i', $filename)) {
+    $filename = preg_replace('/\.[^.]+$/', '', $filename) . '.png';
 }
 
 $base64 = !empty($data['base64']) ? $data['base64'] : $data['dataUrl'];
@@ -61,7 +61,7 @@ $targetPath = $mediaDir . '/' . $filename;
 if (file_put_contents($targetPath, $binary) !== false) {
     echo json_encode([
         'success' => true,
-        'url' => 'media/' . $filename,
+        'url' => '/media/' . $filename,
         'filename' => $filename,
         'size' => strlen($binary)
     ]);

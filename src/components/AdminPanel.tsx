@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { useSettings } from '../context/SettingsContext';
-import { convertImageToWebP, uploadAndSaveWebP, uploadDocumentFile } from '../utils/imageToWebp';
+import { convertImageToWebP, uploadAndSaveWebP, uploadDocumentFile, uploadDirectImage } from '../utils/imageToWebp';
 import { SlideItem, GalleryPhotoItem, SectionKey, MarqueeItem } from '../types/settings';
 import {
   Settings,
@@ -80,25 +80,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   >('general');
   const [saveToast, setSaveToast] = useState(false);
   const [isConvertingImage, setIsConvertingImage] = useState(false);
-  const [manualSaveSuccess, setManualSaveSuccess] = useState(false);
-  const [manualSaveNotice, setManualSaveNotice] = useState('');
   const [logoError, setLogoError] = useState(false);
   const [faviconError, setFaviconError] = useState(false);
-
-  const handleManualCommitSave = async () => {
-    try {
-      const res = await saveSettingsPermanently();
-      setManualSaveSuccess(true);
-      setManualSaveNotice(res.message || 'All changes saved permanently to server disk & browser cache');
-      setTimeout(() => {
-        setManualSaveSuccess(false);
-        setManualSaveNotice('');
-      }, 5000);
-    } catch (err: any) {
-      setManualSaveNotice('Save failed: ' + (err?.message || 'Server error'));
-      setTimeout(() => setManualSaveNotice(''), 5000);
-    }
-  };
 
   // Marquee item form state
   const [showAddMarqueeModal, setShowAddMarqueeModal] = useState(false);
@@ -259,18 +242,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting logo to WebP & saving to media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'beats_logo');
+      setUploadStatusMessage('Uploading logo directly to /media/ (PNG preserved)...');
+      const { url } = await uploadDirectImage(file, 'beats_logo');
       setLogoError(false);
       updateSettings({ logoUrl: url });
       await saveSettingsPermanently();
       showNotification();
     } catch (err) {
       console.error(err);
-      alert('Failed to process logo to WebP');
+      alert('Failed to upload logo');
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -279,18 +263,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting favicon to WebP & saving to media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'beats_favicon');
+      setUploadStatusMessage('Uploading favicon directly to /media/ (PNG preserved)...');
+      const { url } = await uploadDirectImage(file, 'beats_favicon');
       setFaviconError(false);
       updateSettings({ faviconUrl: url });
       await saveSettingsPermanently();
       showNotification();
     } catch (err) {
       console.error(err);
-      alert('Failed to process favicon to WebP');
+      alert('Failed to upload favicon');
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -299,7 +284,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage(`Uploading document ${file.name} to media folder...`);
+      setUploadStatusMessage(`Uploading document ${file.name} to /media/...`);
       const { url } = await uploadDocumentFile(file, 'prospectus');
       updateSettings({ prospectusUrl: url });
       await saveSettingsPermanently();
@@ -310,6 +295,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -826,38 +812,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
             </div>
 
             <div className="flex items-center gap-2.5">
-              {/* Primary Manual Save Button */}
-              <button
-                type="button"
-                onClick={handleManualCommitSave}
-                disabled={isSaving}
-                className={`px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all shadow-md cursor-pointer border ${
-                  manualSaveSuccess
-                    ? 'bg-emerald-600 text-white border-emerald-400'
-                    : isSaving
-                    ? 'bg-amber-600 text-white border-amber-400 opacity-90 cursor-wait'
-                    : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 border-amber-300'
-                }`}
-                title="Manually commit all changes to disk (site-settings.json) and browser cache"
-              >
-                {isSaving ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                    <span>Saving...</span>
-                  </>
-                ) : manualSaveSuccess ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 text-white" />
-                    <span>Saved!</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 text-slate-950" />
-                    <span>Save All Changes</span>
-                  </>
-                )}
-              </button>
-
               <a
                 href="/cpanel-public-html.zip"
                 download="cpanel-public-html.zip"
@@ -901,14 +855,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
           </div>
         </div>
       </header>
-
-      {/* Manual Save Feedback Banner */}
-      {manualSaveNotice && (
-        <div className="bg-emerald-950/90 border-b border-emerald-500/40 px-4 py-2.5 text-center text-xs sm:text-sm text-emerald-200 font-semibold flex items-center justify-center gap-2 animate-fade-in shadow-md">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{manualSaveNotice}</span>
-        </div>
-      )}
 
       {/* Admin Body */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
@@ -1108,7 +1054,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                 Site Identity, Links &amp; Logo
               </h3>
               <p className="text-slate-400 text-sm mb-6">
-                All image uploads are automatically compressed and converted into lightweight WebP format for fast loading speeds.
+                Uploaded images and files are saved directly into <code className="text-amber-300 font-mono">/media/</code>. Logos and favicons preserve their crisp PNG format with transparency and are not converted to WebP.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1122,7 +1068,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                       {logoError ? (
                         <div className="text-center py-1 px-2">
                           <span className="text-xs font-bold text-slate-900 block tracking-wide">BEATS LOGO</span>
-                          <span className="text-[10px] text-amber-700 block">Image not loaded • Upload WebP</span>
+                          <span className="text-[10px] text-amber-700 block">Image not loaded</span>
                         </div>
                       ) : (
                         <img
@@ -1138,7 +1084,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                   <div className="flex flex-col gap-2">
                     <label className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 text-xs font-semibold border border-blue-700/50 transition-colors">
                       <Upload className="w-4 h-4" />
-                      Upload New Logo (Auto WebP)
+                      Upload Logo (PNG / JPG / SVG)
                       <input
                         type="file"
                         accept="image/*"
@@ -1182,7 +1128,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                   <div className="flex flex-col gap-2">
                     <label className="cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 text-xs font-semibold border border-blue-700/50 transition-colors">
                       <Upload className="w-4 h-4" />
-                      Upload New Favicon (Auto WebP)
+                      Upload Favicon (PNG / ICO)
                       <input
                         type="file"
                         accept="image/*"
@@ -1323,43 +1269,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                     )}
                   </div>
                 </div>
-              </div>
-
-              {/* Section-level manual save & commit bar */}
-              <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
-                  <span>Changes auto-save. Click button to force permanent write to disk (site-settings.json).</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleManualCommitSave}
-                  disabled={isSaving}
-                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer border ${
-                    manualSaveSuccess
-                      ? 'bg-emerald-600 text-white border-emerald-400'
-                      : isSaving
-                      ? 'bg-amber-600 text-white border-amber-400 opacity-90'
-                      : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-300'
-                  }`}
-                >
-                  {isSaving ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Committing to Server...</span>
-                    </>
-                  ) : manualSaveSuccess ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Committed to Disk!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      <span>Commit &amp; Save General Settings</span>
-                    </>
-                  )}
-                </button>
               </div>
             </div>
           </div>
@@ -4205,45 +4114,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
           <div className="text-xs font-medium text-slate-200">{rebuildZipMessage}</div>
         </div>
       )}
-
-      {/* Persistent Floating Bottom Save Bar */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 border border-slate-700/90 shadow-2xl rounded-2xl px-4 sm:px-6 py-2.5 backdrop-blur-md flex items-center gap-3 sm:gap-5 max-w-[95vw]">
-        <div className="flex items-center gap-2 text-xs text-slate-300 hidden md:flex">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-          <span className="font-semibold text-slate-200">Live Changes Active</span>
-          {lastSavedTime && <span className="text-slate-400 font-mono">| Last saved: {lastSavedTime}</span>}
-        </div>
-        <button
-          type="button"
-          onClick={handleManualCommitSave}
-          disabled={isSaving}
-          className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-lg cursor-pointer border ${
-            manualSaveSuccess
-              ? 'bg-emerald-600 text-white border-emerald-400 shadow-emerald-900/30'
-              : isSaving
-              ? 'bg-amber-600 text-white border-amber-400 opacity-90 cursor-wait'
-              : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 border-amber-300 hover:scale-102'
-          }`}
-          title="Commit and write all current settings to disk"
-        >
-          {isSaving ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>Committing to Disk...</span>
-            </>
-          ) : manualSaveSuccess ? (
-            <>
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Committed to Disk!</span>
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              <span>Save &amp; Commit All Changes</span>
-            </>
-          )}
-        </button>
-      </div>
     </div>
   );
 };

@@ -29,6 +29,7 @@ function mediaUploaderPlugin(): Plugin {
                 '.jpg': 'image/jpeg',
                 '.jpeg': 'image/jpeg',
                 '.svg': 'image/svg+xml',
+                '.ico': 'image/x-icon',
                 '.gif': 'image/gif',
                 '.pdf': 'application/pdf',
                 '.doc': 'application/msword',
@@ -138,15 +139,30 @@ function mediaUploaderPlugin(): Plugin {
           req.on('end', () => {
             try {
               const parsed = JSON.parse(body);
-              let filename = (parsed.filename || `upload_${Date.now()}.webp`).trim();
+              let filename = (parsed.filename || `upload_${Date.now()}.png`).trim();
               
               // Sanitize filename: replace spaces & unsafe chars with hyphens/underscores
               filename = filename.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
-              if (!filename.toLowerCase().endsWith('.webp')) {
-                filename = filename.replace(/\.[^/.]+$/, '') + '.webp';
+              
+              // Detect format from data if extension missing or unknown
+              const rawData = parsed.base64 || parsed.dataUrl || '';
+              if (!filename.match(/\.(png|webp|jpg|jpeg|gif|svg|ico|pdf|doc|docx)$/i)) {
+                if (rawData.startsWith('data:image/png')) {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.png';
+                } else if (rawData.startsWith('data:image/webp')) {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.webp';
+                } else if (rawData.startsWith('data:image/svg')) {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.svg';
+                } else if (rawData.startsWith('data:image/x-icon') || rawData.startsWith('data:image/vnd.microsoft.icon')) {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.ico';
+                } else if (rawData.startsWith('data:application/pdf')) {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.pdf';
+                } else {
+                  filename = filename.replace(/\.[^/.]+$/, '') + '.png';
+                }
               }
 
-              let base64Data = parsed.base64 || parsed.dataUrl || '';
+              let base64Data = rawData;
               if (base64Data.includes(',')) {
                 base64Data = base64Data.split(',')[1];
               }

@@ -9,7 +9,7 @@ import { SiteSettings, DEFAULT_SITE_SETTINGS, SectionKey } from '../types/settin
 interface SettingsContextType {
   settings: SiteSettings;
   updateSettings: (newSettings: Partial<SiteSettings>) => void;
-  saveSettingsPermanently: () => Promise<{ success: boolean; message: string }>;
+  saveSettingsPermanently: (overrideSettings?: Partial<SiteSettings>) => Promise<{ success: boolean; message: string }>;
   isSaving: boolean;
   lastSavedTime: string | null;
   resetSettings: () => void;
@@ -148,14 +148,20 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               'aboutImage', 'achievementsImage', 'whyChooseImage'
             ];
             const finalMerged = { ...mergedFromServer };
+            let hasLocalMediaOverride = false;
             for (const key of mediaKeys) {
               const localVal = prev[key] as string;
               const serverVal = serverData[key] as string;
               if (localVal && (localVal.includes('/media/') || localVal.startsWith('data:'))) {
-                if (!serverVal || !serverVal.includes('/media/')) {
+                if (!serverVal || !serverVal.includes('/media/') || localTimestamp >= serverTimestamp) {
                   (finalMerged as any)[key] = localVal;
+                  if (localVal !== serverVal) hasLocalMediaOverride = true;
                 }
               }
+            }
+
+            if (hasLocalMediaOverride) {
+              persistSettingsToServer(finalMerged);
             }
 
             try {
@@ -217,12 +223,13 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
-  const saveSettingsPermanently = async (): Promise<{ success: boolean; message: string }> => {
+  const saveSettingsPermanently = async (overrideSettings?: Partial<SiteSettings>): Promise<{ success: boolean; message: string }> => {
     setIsSaving(true);
     try {
       const now = Date.now();
       const latest: SiteSettings = {
         ...settings,
+        ...(overrideSettings || {}),
         updatedAt: now
       };
       setSettings(latest);
