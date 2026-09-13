@@ -79,10 +79,12 @@ def main():
                     rel_path = os.path.relpath(full_path, dist_dir)
                     zipf.write(full_path, rel_path)
 
-        # Copy to public directory for immediate browser download
+        # Copy to public directory and dist directory for immediate browser download
         public_dest = os.path.join(root_dir, 'public', zname)
         shutil.copy2(zip_path, public_dest)
-        print(f"Copied {zname} to public/ ({os.path.getsize(zip_path)} bytes)")
+        dist_dest = os.path.join(dist_dir, zname)
+        shutil.copy2(zip_path, dist_dest)
+        print(f"Copied {zname} to public/ and dist/ ({os.path.getsize(zip_path)} bytes)")
 
     print("cPanel public_html package successfully generated!")
 

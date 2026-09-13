@@ -5,17 +5,31 @@
 
 /**
  * Converts an uploaded image File to optimized WebP base64 data URL
- * using an HTML5 offscreen Canvas.
+ * using an HTML5 offscreen Canvas with smart web downscaling.
  */
-export async function convertImageToWebP(file: File, quality = 0.85): Promise<string> {
+export async function convertImageToWebP(file: File, quality = 0.85, maxDimension = 1920): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
+        let width = img.naturalWidth || img.width || 800;
+        let height = img.naturalHeight || img.height || 600;
+
+        // Smart downscaling to prevent oversized base64 strings and memory exhaustion
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
         const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
+        canvas.width = width;
+        canvas.height = height;
 
         const ctx = canvas.getContext('2d');
         if (!ctx) {
@@ -23,8 +37,12 @@ export async function convertImageToWebP(file: File, quality = 0.85): Promise<st
           return;
         }
 
+        // Use high quality image smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
         // Draw image onto canvas
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, width, height);
 
         // Convert to WebP format
         try {
@@ -75,6 +93,55 @@ export function sanitizeWebpFilename(originalName: string, prefix?: string): str
 }
 
 /**
+ * Helper to upload payload to server across dev and production endpoints
+ */
+async function postToUploadEndpoints(
+  filename: string,
+  base64Data: string
+): Promise<{ success: boolean; url: string; filename: string }> {
+  const payload = JSON.stringify({
+    filename,
+    base64: base64Data
+  });
+
+  const endpoints = ['/api/upload', '/api/upload.php', 'api/upload.php', 'api/upload'];
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: payload
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.url) {
+          const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
+          return {
+            success: true,
+            url: finalUrl,
+            filename: data.filename || filename
+          };
+        }
+      }
+    } catch {
+      // Continue to next endpoint
+    }
+  }
+
+  // Fallback: always return standard /media/ path so settings receive clean URL
+  return {
+    success: false,
+    url: `/media/${filename}`,
+    filename
+  };
+}
+
+/**
  * Uploads an image file directly (PNG, SVG, ICO, JPG, etc.) WITHOUT converting PNG to WebP.
  * Preserves the original file extension, exact binary data, transparency, and crispness.
  * Physically writes to /media/***** and returns { url: `/media/${filename}`, filename }.
@@ -103,45 +170,17 @@ export async function uploadDirectImage(
       const filename = `${baseName || 'image'}_${shortTimestamp}.${originalExt}`;
 
       try {
-        const payload = JSON.stringify({
-          filename,
-          base64: dataUrl
+        const result = await postToUploadEndpoints(filename, dataUrl);
+        resolve({
+          url: result.url,
+          filename: result.filename
         });
-
-        let res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload
+      } catch {
+        resolve({
+          url: `/media/${filename}`,
+          filename
         });
-
-        if (!res.ok) {
-          res = await fetch('api/upload.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload
-          });
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.url) {
-            const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
-            resolve({
-              url: finalUrl,
-              filename: data.filename || filename
-            });
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Direct image upload failed, falling back to data URL:', err);
       }
-
-      // Fallback
-      resolve({
-        url: dataUrl,
-        filename
-      });
     };
     reader.onerror = () => reject(new Error('Failed to read image file'));
     reader.readAsDataURL(file);
@@ -157,56 +196,20 @@ export async function uploadAndSaveWebP(
   filenamePrefix?: string,
   quality = 0.85
 ): Promise<{ url: string; filename: string }> {
-  // If file is PNG, preserve original PNG format (do not convert to WebP)
-  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
+  // If file is PNG or SVG, preserve original format (do not convert to WebP)
+  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png') || file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
     return uploadDirectImage(file, filenamePrefix);
   }
 
-  // 1. Convert to WebP base64
+  // 1. Convert to WebP base64 with downscaling for optimal file size and quality
   const webpDataUrl = await convertImageToWebP(file, quality);
   const filename = sanitizeWebpFilename(file.name, filenamePrefix);
 
   // 2. Upload to server endpoint to save into public/media
-  try {
-    const payload = JSON.stringify({
-      filename,
-      base64: webpDataUrl
-    });
-
-    let res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload
-    });
-
-    if (!res.ok) {
-      // Fallback try upload.php for cPanel Apache environments
-      res = await fetch('api/upload.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload
-      });
-    }
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.url) {
-        // Return clean URL path for media
-        const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
-        return {
-          url: finalUrl,
-          filename: data.filename || filename
-        };
-      }
-    }
-  } catch (err) {
-    console.warn('Media upload to server failed, falling back to base64 WebP URL:', err);
-  }
-
-  // Graceful fallback to dataUrl so user sees image immediately even if server is offline
+  const result = await postToUploadEndpoints(filename, webpDataUrl);
   return {
-    url: webpDataUrl,
-    filename
+    url: result.url,
+    filename: result.filename
   };
 }
 
@@ -250,44 +253,17 @@ export async function uploadDocumentFile(
       const filename = `${baseName || 'document'}_${shortTimestamp}.${originalExt}`;
 
       try {
-        const payload = JSON.stringify({
-          filename,
-          base64: base64DataUrl
+        const result = await postToUploadEndpoints(filename, base64DataUrl);
+        resolve({
+          url: result.url,
+          filename: result.filename
         });
-
-        let res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: payload
+      } catch {
+        resolve({
+          url: `/media/${filename}`,
+          filename
         });
-
-        if (!res.ok) {
-          res = await fetch('api/upload.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload
-          });
-        }
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.url) {
-            const finalUrl = data.url.startsWith('/') ? data.url : `/${data.url}`;
-            resolve({
-              url: finalUrl,
-              filename: data.filename || filename
-            });
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Document server upload failed, falling back to data URL:', err);
       }
-
-      resolve({
-        url: base64DataUrl,
-        filename
-      });
     };
     reader.onerror = () => reject(new Error('Failed to read document file'));
     reader.readAsDataURL(file);

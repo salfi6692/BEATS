@@ -147,10 +147,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting MD photo to WebP & saving to media folder...');
+      setUploadStatusMessage('Converting MD photo to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'leadership_md');
       updateSettings({ mdImage: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ mdImage: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -158,6 +158,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -166,10 +167,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting DMD photo to WebP & saving to media folder...');
+      setUploadStatusMessage('Converting DMD photo to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'leadership_dmd');
       updateSettings({ dmdImage: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ dmdImage: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -177,6 +178,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -185,10 +187,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting About graphic to WebP & saving to media folder...');
+      setUploadStatusMessage('Converting About graphic to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'about_beats');
       updateSettings({ aboutImage: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ aboutImage: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -196,6 +198,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -204,10 +207,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting Achievements ceremony photo to WebP & saving to media folder...');
+      setUploadStatusMessage('Converting Achievements ceremony photo to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'achievements_cns');
       updateSettings({ achievementsImage: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ achievementsImage: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -215,6 +218,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -223,10 +227,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting campus photo to WebP & saving to media folder...');
+      setUploadStatusMessage('Converting campus photo to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'why_choose');
       updateSettings({ whyChooseImage: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ whyChooseImage: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -234,6 +238,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -242,11 +247,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Uploading logo directly to /media/ (PNG preserved)...');
+      setUploadStatusMessage('Uploading logo directly to /media/ folder...');
       const { url } = await uploadDirectImage(file, 'beats_logo');
       setLogoError(false);
       updateSettings({ logoUrl: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ logoUrl: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -263,11 +268,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Uploading favicon directly to /media/ (PNG preserved)...');
+      setUploadStatusMessage('Uploading favicon directly to /media/ folder...');
       const { url } = await uploadDirectImage(file, 'beats_favicon');
       setFaviconError(false);
       updateSettings({ faviconUrl: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ faviconUrl: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -284,10 +289,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage(`Uploading document ${file.name} to /media/...`);
+      setUploadStatusMessage(`Uploading document ${file.name} to /media/ folder...`);
       const { url } = await uploadDocumentFile(file, 'prospectus');
       updateSettings({ prospectusUrl: url });
-      await saveSettingsPermanently();
+      await saveSettingsPermanently({ prospectusUrl: url });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -304,7 +309,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting slide image to WebP & saving to media folder...');
+      setUploadStatusMessage('Converting slide image to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'hero_slide');
       setNewSlideImage(url);
     } catch (err) {
@@ -313,6 +318,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -321,7 +327,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     if (!file) return;
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting photo to WebP & saving to media folder...');
+      setUploadStatusMessage('Converting photo to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
       setNewPhotoImage(url);
     } catch (err) {
@@ -330,6 +336,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     } finally {
       setIsConvertingImage(false);
       setUploadStatusMessage('');
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -337,12 +344,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleReplaceSlideImage = async (slideId: string, file: File) => {
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Replacing slide image, converting to WebP & saving to media folder...');
+      setUploadStatusMessage('Replacing slide image, converting to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'hero_slide');
       const updated = settings.slides.map((s) =>
         s.id === slideId ? { ...s, image: url } : s
       );
       updateSettings({ slides: updated });
+      await saveSettingsPermanently({ slides: updated });
       showNotification();
     } catch (err) {
       console.error(err);
@@ -437,12 +445,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleReplacePhotoImage = async (photoId: string, file: File) => {
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Replacing gallery photo, converting to WebP & saving to media folder...');
+      setUploadStatusMessage('Replacing gallery photo, converting to WebP & saving to /media folder...');
       const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
       const updated = settings.galleryPhotos.map((p) =>
         p.id === photoId ? { ...p, image: url } : p
       );
       updateSettings({ galleryPhotos: updated });
+      await saveSettingsPermanently({ galleryPhotos: updated });
       showNotification();
     } catch (err) {
       console.error(err);

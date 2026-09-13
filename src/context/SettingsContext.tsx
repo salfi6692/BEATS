@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { SiteSettings, DEFAULT_SITE_SETTINGS, SectionKey } from '../types/settings';
 
 interface SettingsContextType {
@@ -103,6 +103,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return DEFAULT_SITE_SETTINGS;
   });
 
+  const settingsRef = useRef<SiteSettings>(settings);
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   // Load latest settings from server on mount while protecting user edits from being overwritten
   useEffect(() => {
     let isMounted = true;
@@ -136,6 +141,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (localTimestamp > serverTimestamp) {
               // Silently sync local changes back to the server so site-settings.json catches up
               persistSettingsToServer(prev);
+              settingsRef.current = prev;
               return prev;
             }
 
@@ -167,6 +173,7 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             try {
               localStorage.setItem(STORAGE_KEY, JSON.stringify(finalMerged));
             } catch {}
+            settingsRef.current = finalMerged;
             return finalMerged;
           });
         }
@@ -206,21 +213,21 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [settings.siteTitle, settings.faviconUrl]);
 
   const updateSettings = (newSettings: Partial<SiteSettings>) => {
-    setSettings((prev) => {
-      const updated = { 
-        ...prev, 
-        ...newSettings,
-        updatedAt: Date.now()
-      };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to persist settings to localStorage', e);
-      }
-      // Persist permanently to site-settings.json on disk / cPanel hosting
-      persistSettingsToServer(updated);
-      return updated;
-    });
+    const now = Date.now();
+    const updated: SiteSettings = { 
+      ...settingsRef.current, 
+      ...newSettings,
+      updatedAt: now
+    };
+    settingsRef.current = updated;
+    setSettings(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to persist settings to localStorage', e);
+    }
+    // Persist permanently to site-settings.json on disk / cPanel hosting
+    persistSettingsToServer(updated);
   };
 
   const saveSettingsPermanently = async (overrideSettings?: Partial<SiteSettings>): Promise<{ success: boolean; message: string }> => {
@@ -228,10 +235,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const now = Date.now();
       const latest: SiteSettings = {
-        ...settings,
+        ...settingsRef.current,
         ...(overrideSettings || {}),
         updatedAt: now
       };
+      settingsRef.current = latest;
       setSettings(latest);
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(latest));
