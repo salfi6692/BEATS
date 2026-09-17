@@ -131,6 +131,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     setTimeout(() => setSaveToast(false), 2500);
   };
 
+  const handleManualSaveSettings = async () => {
+    await saveSettingsPermanently();
+    showNotification();
+  };
+
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const success = loginAdmin(username, password);
@@ -362,7 +367,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   };
 
   // Slide reordering
-  const handleMoveSlide = (index: number, direction: 'up' | 'down') => {
+  const handleMoveSlide = async (index: number, direction: 'up' | 'down') => {
     const newSlides = [...settings.slides];
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
     if (targetIdx < 0 || targetIdx >= newSlides.length) return;
@@ -370,6 +375,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     newSlides[index] = newSlides[targetIdx];
     newSlides[targetIdx] = temp;
     updateSettings({ slides: newSlides });
+    await saveSettingsPermanently({ slides: newSlides });
     showNotification();
   };
 
@@ -384,7 +390,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   };
 
   // Save Edit Slide Modal
-  const handleSaveEditedSlide = (e: React.FormEvent) => {
+  const handleSaveEditedSlide = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingSlide || !editSlideTitle || !editSlideImage) {
       alert('Slide Title and Image are required');
@@ -402,12 +408,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
         : s
     );
     updateSettings({ slides: updated });
+    await saveSettingsPermanently({ slides: updated });
     setShowEditSlideModal(false);
     setEditingSlide(null);
     showNotification();
   };
 
-  const handleAddSlide = (e: React.FormEvent) => {
+  const handleAddSlide = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSlideImage || !newSlideTitle) {
       alert('Image and Title are required');
@@ -420,9 +427,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
       title: newSlideTitle,
       caption: newSlideCaption || ''
     };
+    const updated = [...settings.slides, newSlide];
     updateSettings({
-      slides: [...settings.slides, newSlide]
+      slides: updated
     });
+    await saveSettingsPermanently({ slides: updated });
     setNewSlideImage('');
     setNewSlideTag('');
     setNewSlideTitle('');
@@ -431,13 +440,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     showNotification();
   };
 
-  const handleDeleteSlide = (id: string) => {
+  const handleDeleteSlide = async (id: string) => {
     if (settings.slides.length <= 1) {
       alert('You must keep at least 1 hero slide.');
       return;
     }
     const updated = settings.slides.filter((s) => s.id !== id);
     updateSettings({ slides: updated });
+    await saveSettingsPermanently({ slides: updated });
     showNotification();
   };
 
@@ -473,7 +483,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   };
 
   // Save Edit Photo Modal
-  const handleSaveEditedPhoto = (e: React.FormEvent) => {
+  const handleSaveEditedPhoto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPhoto || !editPhotoTitle || !editPhotoImage) {
       alert('Photo Title and Image are required');
@@ -491,6 +501,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
         : p
     );
     updateSettings({ galleryPhotos: updated });
+    await saveSettingsPermanently({ galleryPhotos: updated });
     setShowEditPhotoModal(false);
     setEditingPhoto(null);
     showNotification();
@@ -519,7 +530,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   };
 
   // Gallery Handlers
-  const handleAddPhoto = (e: React.FormEvent) => {
+  const handleAddPhoto = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPhotoImage || !newPhotoTitle) {
       alert('Photo image and title are required');
@@ -532,9 +543,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
       image: newPhotoImage,
       caption: newPhotoCaption || ''
     };
+    const updated = [...settings.galleryPhotos, photo];
     updateSettings({
-      galleryPhotos: [...settings.galleryPhotos, photo]
+      galleryPhotos: updated
     });
+    await saveSettingsPermanently({ galleryPhotos: updated });
     setNewPhotoImage('');
     setNewPhotoTitle('');
     setNewPhotoCaption('');
@@ -542,13 +555,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     showNotification();
   };
 
-  const handleDeletePhoto = (id: string) => {
+  const handleDeletePhoto = async (id: string) => {
     const updated = settings.galleryPhotos.filter((p) => p.id !== id);
     updateSettings({ galleryPhotos: updated });
+    await saveSettingsPermanently({ galleryPhotos: updated });
     showNotification();
   };
 
-  const handleMovePhoto = (index: number, direction: 'up' | 'down') => {
+  const handleMovePhoto = async (index: number, direction: 'up' | 'down') => {
     const newPhotos = [...settings.galleryPhotos];
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
     if (targetIdx < 0 || targetIdx >= newPhotos.length) return;
@@ -556,11 +570,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     newPhotos[index] = newPhotos[targetIdx];
     newPhotos[targetIdx] = temp;
     updateSettings({ galleryPhotos: newPhotos });
+    await saveSettingsPermanently({ galleryPhotos: newPhotos });
     showNotification();
   };
 
   // Marquee Handlers
-  const handleSaveMarqueeItem = (e: React.FormEvent) => {
+  const handleSaveMarqueeItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMarqueeText.trim()) {
       alert('Announcement text is required');
@@ -602,12 +617,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
       updatedItems = [...(currentMarquee.items || []), newItem];
     }
 
+    const updatedMarquee = {
+      ...currentMarquee,
+      items: updatedItems
+    };
+
     updateSettings({
-      marquee: {
-        ...currentMarquee,
-        items: updatedItems
-      }
+      marquee: updatedMarquee
     });
+    await saveSettingsPermanently({ marquee: updatedMarquee });
 
     setNewMarqueeText('');
     setNewMarqueeBadge('ANNOUNCEMENT');
@@ -618,16 +636,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
     showNotification();
   };
 
-  const handleDeleteMarqueeItem = (id: string) => {
+  const handleDeleteMarqueeItem = async (id: string) => {
     const currentMarquee = settings.marquee;
     if (!currentMarquee) return;
     const updated = (currentMarquee.items || []).filter((item) => item.id !== id);
+    const updatedMarquee = {
+      ...currentMarquee,
+      items: updated
+    };
     updateSettings({
-      marquee: {
-        ...currentMarquee,
-        items: updated
-      }
+      marquee: updatedMarquee
     });
+    await saveSettingsPermanently({ marquee: updatedMarquee });
     showNotification();
   };
 
@@ -798,7 +818,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
       {saveToast && (
         <div className="fixed bottom-6 right-6 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2 text-sm font-semibold border border-emerald-400/40 animate-fade-in">
           <CheckCircle2 className="w-5 h-5" />
-          Settings automatically saved &amp; applied live!
+          Settings permanently saved to disk (site-settings.json) &amp; applied live!
         </div>
       )}
 
@@ -821,6 +841,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
             </div>
 
             <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleManualSaveSettings}
+                disabled={isSaving}
+                className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-50"
+                title="Save all changes permanently to server disk (site-settings.json)"
+              >
+                {isSaving ? (
+                  <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                ) : (
+                  <Save className="w-4 h-4 text-slate-950" />
+                )}
+                <span>{isSaving ? 'Saving...' : 'Save Settings to Disk'}</span>
+                {lastSavedTime && (
+                  <span className="hidden xl:inline text-[10px] font-semibold text-slate-900 bg-amber-400/90 px-1.5 py-0.5 rounded">
+                    {lastSavedTime}
+                  </span>
+                )}
+              </button>
+
               <a
                 href="/cpanel-public-html.zip"
                 download="cpanel-public-html.zip"

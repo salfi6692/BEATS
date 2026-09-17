@@ -2,15 +2,24 @@
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-  RewriteRule ^index\.html$ - [L]
 
-  # Route /api/upload directly to /api/upload.php
+  # 1. Route API endpoints directly to backend PHP handlers
   RewriteRule ^api/upload/?$ api/upload.php [QSA,L]
+  RewriteRule ^api/upload\.php$ api/upload.php [QSA,L]
+  RewriteRule ^api/save-settings/?$ api/save-settings.php [QSA,L]
+  RewriteRule ^api/save-settings\.php$ api/save-settings.php [QSA,L]
+  RewriteRule ^api/settings/?$ api/get-settings.php [QSA,L]
+  RewriteRule ^api/get-settings/?$ api/get-settings.php [QSA,L]
+  RewriteRule ^api/get-settings\.php$ api/get-settings.php [QSA,L]
 
-  # Pass existing files and directories through
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_FILENAME} !-l
+  # 2. Pass existing files and directories through directly (e.g. /media/*, /site-settings.json)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d [OR]
+  RewriteCond %{REQUEST_FILENAME} -l
+  RewriteRule ^ - [L]
+
+  # 3. Route all other requests to SPA index.html
+  RewriteRule ^index\.html$ - [L]
   RewriteRule . /index.html [L]
 </IfModule>
 

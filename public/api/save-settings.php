@@ -6,11 +6,11 @@
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, Accept, X-Requested-With');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(204);
     exit();
 }
 
@@ -31,7 +31,10 @@ if (!$data) {
 
 // Extract settings object if wrapped in { settings: ... }
 $incoming = isset($data['settings']) ? $data['settings'] : $data;
-$targetFile = realpath(__DIR__ . '/..') . '/site-settings.json';
+
+// Candidate locations for site-settings.json on cPanel Apache
+$parentDir = dirname(__DIR__);
+$targetFile = $parentDir . '/site-settings.json';
 
 // Read existing settings if available
 $existing = [];
@@ -56,12 +59,13 @@ if (file_put_contents($targetFile, $jsonString) !== false) {
     echo json_encode([
         'success' => true,
         'message' => 'Settings saved successfully to site-settings.json',
+        'updatedAt' => $merged['updatedAt'],
         'timestamp' => time()
     ]);
 } else {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error' => 'Failed to write site-settings.json. Please check permissions.'
+        'error' => 'Failed to write site-settings.json. Please check file permissions on server.'
     ]);
 }

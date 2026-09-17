@@ -26,29 +26,39 @@ const AUTH_KEY = 'beats_admin_auth_v1';
 async function persistSettingsToServer(latestSettings: SiteSettings): Promise<{ success: boolean; message: string }> {
   try {
     const payload = JSON.stringify({ settings: latestSettings });
-    let res: Response | null = null;
-    try {
-      res = await fetch('/api/save-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload
-      });
-    } catch {}
+    const endpoints = [
+      '/api/save-settings',
+      '/api/save-settings.php',
+      'api/save-settings.php',
+      'api/save-settings',
+      './api/save-settings.php',
+      './api/save-settings'
+    ];
 
-    if (!res || !res.ok) {
+    for (const endpoint of endpoints) {
       try {
-        // Fallback to PHP script for cPanel Apache hosting
-        res = await fetch('api/save-settings.php', {
+        const res = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
           body: payload
         });
-      } catch {}
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data && data.success) {
+              return { success: true, message: 'Settings saved permanently to disk (site-settings.json)' };
+            }
+          }
+        }
+      } catch {
+        // try next endpoint
+      }
     }
 
-    if (res && res.ok) {
-      return { success: true, message: 'Settings saved permanently to disk (site-settings.json)' };
-    }
     return { success: true, message: 'Settings saved safely in browser storage' };
   } catch (e) {
     console.warn('Background server save failed, settings remain cached locally:', e);
@@ -114,19 +124,30 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     async function loadServerSettings() {
       try {
-        let serverData: any = null;
-        try {
-          const res = await fetch(`/api/settings?v=${Date.now()}`);
-          if (res.ok) {
-            serverData = await res.json();
-          }
-        } catch {}
+        const fetchEndpoints = [
+          `/api/settings?v=${Date.now()}`,
+          `/api/get-settings.php?v=${Date.now()}`,
+          `api/get-settings.php?v=${Date.now()}`,
+          `site-settings.json?v=${Date.now()}`,
+          `./site-settings.json?v=${Date.now()}`,
+          `/site-settings.json?v=${Date.now()}`
+        ];
 
-        if (!serverData) {
+        let serverData: any = null;
+        for (const ep of fetchEndpoints) {
           try {
-            const res = await fetch(`site-settings.json?v=${Date.now()}`);
+            const res = await fetch(ep, {
+              headers: { 'Accept': 'application/json' }
+            });
             if (res.ok) {
-              serverData = await res.json();
+              const contentType = res.headers.get('content-type') || '';
+              if (contentType.includes('application/json') || ep.includes('site-settings.json')) {
+                const data = await res.json();
+                if (data && typeof data === 'object' && (data.siteTitle || data.logoUrl || data.updatedAt !== undefined)) {
+                  serverData = data;
+                  break;
+                }
+              }
             }
           } catch {}
         }
@@ -136,16 +157,22 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             const localTimestamp = prev.updatedAt || 0;
             const serverTimestamp = serverData.updatedAt || 0;
 
-            // 1. If local settings were saved AFTER server settings, local changes WIN.
-            // Never let older server defaults erase user's custom images or documents!
-            if (localTimestamp > serverTimestamp) {
-              // Silently sync local changes back to the server so site-settings.json catches up
+            // 1. If server settings are the default template (updatedAt === 0) and we have local user edits,
+            // local edits always WIN!
+            if (serverTimestamp === 0 && localTimestamp > 0) {
               persistSettingsToServer(prev);
               settingsRef.current = prev;
               return prev;
             }
 
-            // 2. Otherwise server is newer or equal:
+            // 2. If local settings were saved AFTER server settings, local changes WIN.
+            if (localTimestamp > serverTimestamp) {
+              persistSettingsToServer(prev);
+              settingsRef.current = prev;
+              return prev;
+            }
+
+            // 3. Otherwise server is newer or equal:
             const mergedFromServer = mergeSettings(DEFAULT_SITE_SETTINGS, serverData);
 
             // Protect any custom uploaded media paths (/media/ or data:) from being replaced by remote fallbacks
@@ -153,17 +180,45 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               'logoUrl', 'faviconUrl', 'prospectusUrl', 'mdImage', 'dmdImage',
               'aboutImage', 'achievementsImage', 'whyChooseImage'
             ];
-            const finalMerged = { ...mergedFromServer };
+            const finalMerged: SiteSettings = { ...mergedFromServer };
             let hasLocalMediaOverride = false;
             for (const key of mediaKeys) {
               const localVal = prev[key] as string;
               const serverVal = serverData[key] as string;
-              if (localVal && (localVal.includes('/media/') || localVal.startsWith('data:'))) {
+              if (localVal && (localVal.includes('/media/') || localVal.startsWith('data:') || localVal.startsWith('blob:'))) {
                 if (!serverVal || !serverVal.includes('/media/') || localTimestamp >= serverTimestamp) {
                   (finalMerged as any)[key] = localVal;
                   if (localVal !== serverVal) hasLocalMediaOverride = true;
                 }
               }
+            }
+
+            // Also protect slides images
+            if (Array.isArray(prev.slides) && Array.isArray(finalMerged.slides)) {
+              finalMerged.slides = finalMerged.slides.map((s, idx) => {
+                const prevSlide = prev.slides.find((ps) => ps.id === s.id) || prev.slides[idx];
+                if (prevSlide && prevSlide.image && (prevSlide.image.includes('/media/') || prevSlide.image.startsWith('data:'))) {
+                  if (!s.image || !s.image.includes('/media/')) {
+                    hasLocalMediaOverride = true;
+                    return { ...s, image: prevSlide.image };
+                  }
+                }
+                return s;
+              });
+            }
+
+            // Also protect gallery photos
+            if (Array.isArray(prev.galleryPhotos) && Array.isArray(finalMerged.galleryPhotos)) {
+              finalMerged.galleryPhotos = finalMerged.galleryPhotos.map((p, idx) => {
+                const prevPhoto = prev.galleryPhotos.find((pp) => pp.id === p.id) || prev.galleryPhotos[idx];
+                if (prevPhoto && prevPhoto.image && (prevPhoto.image.includes('/media/') || prevPhoto.image.startsWith('data:'))) {
+                  if (!p.image || !p.image.includes('/media/')) {
+                    hasLocalMediaOverride = true;
+                    return { ...p, image: prevPhoto.image };
+                  }
+                }
+                return p;
+              });
             }
 
             if (hasLocalMediaOverride) {
