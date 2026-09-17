@@ -22,18 +22,19 @@ function mediaUploaderPlugin(): Plugin {
       }
     }
 
-    // 1. Explicitly serve /media/ files with proper image MIME types
-    // This guarantees dynamically uploaded WebP images load immediately without falling back to index.html
-    if (url && (url.startsWith('/media/') || url.startsWith('media/'))) {
-      const mediaFilename = path.basename(url);
+    // 1. Explicitly serve static media files with proper MIME types
+    // Supports /media/ as well as any custom directory (e.g. /abc/media/, /uploads/, etc.)
+    const ext = path.extname(url).toLowerCase();
+    const isMediaExt = ['.webp', '.png', '.jpg', '.jpeg', '.svg', '.ico', '.gif', '.pdf', '.doc', '.docx'].includes(ext);
+    if (url && (isMediaExt || url.startsWith('/media/') || url.startsWith('media/')) && !url.startsWith('/api') && !url.startsWith('/@') && !url.startsWith('/src')) {
+      const cleanRelPath = url.replace(/^\/+/, '');
       const candidateDirs = [
-        path.resolve(process.cwd(), 'public/media'),
-        path.resolve(process.cwd(), 'dist/media')
+        path.resolve(process.cwd(), 'public'),
+        path.resolve(process.cwd(), 'dist')
       ];
-      for (const dir of candidateDirs) {
-        const filePath = path.join(dir, mediaFilename);
-        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-          const ext = path.extname(filePath).toLowerCase();
+      for (const baseDir of candidateDirs) {
+        const filePath = path.resolve(baseDir, cleanRelPath);
+        if (filePath.startsWith(baseDir) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
           const mimeMap: Record<string, string> = {
             '.webp': 'image/webp',
             '.png': 'image/png',
@@ -186,7 +187,17 @@ function mediaUploaderPlugin(): Plugin {
             base64Data = base64Data.split(',')[1];
           }
 
-          const mediaDir = path.resolve(process.cwd(), 'public/media');
+          // Dynamic upload location (e.g. /media, /abc/media, /uploads)
+          const rawUploadPath = (parsed.uploadPath || '/media').toString();
+          const segments = rawUploadPath
+            .replace(/\\/g, '/')
+            .split('/')
+            .filter((s: string) => s && s !== '..' && s !== '.')
+            .map((s: string) => s.replace(/[^a-zA-Z0-9_\-]/g, '_'));
+          const cleanUploadRelPath = segments.length > 0 ? segments.join('/') : 'media';
+          const uploadUrlPrefix = `/${cleanUploadRelPath}`;
+
+          const mediaDir = path.resolve(process.cwd(), 'public', cleanUploadRelPath);
           if (!fs.existsSync(mediaDir)) {
             fs.mkdirSync(mediaDir, { recursive: true });
           }
@@ -195,10 +206,10 @@ function mediaUploaderPlugin(): Plugin {
           const buffer = Buffer.from(base64Data, 'base64');
           fs.writeFileSync(filePath, buffer);
 
-          // Mirror to dist/media if dist folder exists
+          // Mirror to dist if dist folder exists
           const distDir = path.resolve(process.cwd(), 'dist');
           if (fs.existsSync(distDir)) {
-            const distMediaDir = path.resolve(distDir, 'media');
+            const distMediaDir = path.resolve(distDir, cleanUploadRelPath);
             if (!fs.existsSync(distMediaDir)) {
               fs.mkdirSync(distMediaDir, { recursive: true });
             }
@@ -210,7 +221,7 @@ function mediaUploaderPlugin(): Plugin {
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.end(JSON.stringify({
             success: true,
-            url: `/media/${filename}`,
+            url: `${uploadUrlPrefix}/${filename}`,
             filename: filename,
             size: buffer.length
           }));

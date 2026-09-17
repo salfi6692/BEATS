@@ -93,15 +93,35 @@ export function sanitizeWebpFilename(originalName: string, prefix?: string): str
 }
 
 /**
+ * Normalizes an upload location path into a sanitized URL prefix and disk subfolder.
+ * Example: '/abc/media' -> { cleanPath: 'abc/media', urlPrefix: '/abc/media' }
+ * Example: 'media' -> { cleanPath: 'media', urlPrefix: '/media' }
+ */
+export function normalizeUploadPath(pathStr?: string): { cleanPath: string; urlPrefix: string } {
+  let p = (pathStr || '/media').trim().replace(/\\/g, '/');
+  p = p.replace(/^\/+/, '').replace(/\/+$/, '');
+  const segments = p
+    .split('/')
+    .filter((s) => s && s !== '..' && s !== '.')
+    .map((s) => s.replace(/[^a-zA-Z0-9_\-]/g, '_'));
+  const cleanPath = segments.length > 0 ? segments.join('/') : 'media';
+  const urlPrefix = `/${cleanPath}`;
+  return { cleanPath, urlPrefix };
+}
+
+/**
  * Helper to upload payload to server across dev and production endpoints
  */
 async function postToUploadEndpoints(
   filename: string,
-  base64Data: string
+  base64Data: string,
+  uploadPath = '/media'
 ): Promise<{ success: boolean; url: string; filename: string }> {
+  const { urlPrefix } = normalizeUploadPath(uploadPath);
   const payload = JSON.stringify({
     filename,
-    base64: base64Data
+    base64: base64Data,
+    uploadPath: urlPrefix
   });
 
   const endpoints = ['/api/upload', '/api/upload.php', 'api/upload.php', 'api/upload'];
@@ -133,10 +153,10 @@ async function postToUploadEndpoints(
     }
   }
 
-  // Fallback: always return standard /media/ path so settings receive clean URL
+  // Fallback: return path formatted with configured upload directory
   return {
     success: false,
-    url: `/media/${filename}`,
+    url: `${urlPrefix}/${filename}`,
     filename
   };
 }
@@ -144,12 +164,14 @@ async function postToUploadEndpoints(
 /**
  * Uploads an image file directly (PNG, SVG, ICO, JPG, etc.) WITHOUT converting PNG to WebP.
  * Preserves the original file extension, exact binary data, transparency, and crispness.
- * Physically writes to /media/***** and returns { url: `/media/${filename}`, filename }.
+ * Physically writes to configured upload folder and returns { url: `${uploadPath}/${filename}`, filename }.
  */
 export async function uploadDirectImage(
   file: File,
-  filenamePrefix = 'media'
+  filenamePrefix = 'media',
+  uploadPath = '/media'
 ): Promise<{ url: string; filename: string }> {
+  const { urlPrefix } = normalizeUploadPath(uploadPath);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -170,14 +192,14 @@ export async function uploadDirectImage(
       const filename = `${baseName || 'image'}_${shortTimestamp}.${originalExt}`;
 
       try {
-        const result = await postToUploadEndpoints(filename, dataUrl);
+        const result = await postToUploadEndpoints(filename, dataUrl, uploadPath);
         resolve({
           url: result.url,
           filename: result.filename
         });
       } catch {
         resolve({
-          url: `/media/${filename}`,
+          url: `${urlPrefix}/${filename}`,
           filename
         });
       }
@@ -188,25 +210,26 @@ export async function uploadDirectImage(
 }
 
 /**
- * Converts image to WebP and physically uploads/saves it into the server's public/media directory.
- * Returns the final URL (/media/filename.webp) and filename.
+ * Converts image to WebP and physically uploads/saves it into the server's configured upload directory.
+ * Returns the final URL (/media/filename.webp or /custom/path/filename.webp) and filename.
  */
 export async function uploadAndSaveWebP(
   file: File,
   filenamePrefix?: string,
-  quality = 0.85
+  quality = 0.85,
+  uploadPath = '/media'
 ): Promise<{ url: string; filename: string }> {
   // If file is PNG or SVG, preserve original format (do not convert to WebP)
   if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png') || file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
-    return uploadDirectImage(file, filenamePrefix);
+    return uploadDirectImage(file, filenamePrefix, uploadPath);
   }
 
   // 1. Convert to WebP base64 with downscaling for optimal file size and quality
   const webpDataUrl = await convertImageToWebP(file, quality);
   const filename = sanitizeWebpFilename(file.name, filenamePrefix);
 
-  // 2. Upload to server endpoint to save into public/media
-  const result = await postToUploadEndpoints(filename, webpDataUrl);
+  // 2. Upload to server endpoint to save into configured upload directory
+  const result = await postToUploadEndpoints(filename, webpDataUrl, uploadPath);
   return {
     url: result.url,
     filename: result.filename
@@ -226,13 +249,15 @@ export function formatBytes(bytes: number, decimals = 1): string {
 }
 
 /**
- * Uploads any document/file (e.g. PDF, Word, Excel) to the server's public/media directory.
- * Preserves the original file extension and returns the clean URL (/media/filename.ext).
+ * Uploads any document/file (e.g. PDF, Word, Excel) to the server's configured upload directory.
+ * Preserves the original file extension and returns the clean URL (/media/filename.ext or /custom/path/filename.ext).
  */
 export async function uploadDocumentFile(
   file: File,
-  filenamePrefix = 'doc'
+  filenamePrefix = 'doc',
+  uploadPath = '/media'
 ): Promise<{ url: string; filename: string }> {
+  const { urlPrefix } = normalizeUploadPath(uploadPath);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -253,14 +278,14 @@ export async function uploadDocumentFile(
       const filename = `${baseName || 'document'}_${shortTimestamp}.${originalExt}`;
 
       try {
-        const result = await postToUploadEndpoints(filename, base64DataUrl);
+        const result = await postToUploadEndpoints(filename, base64DataUrl, uploadPath);
         resolve({
           url: result.url,
           filename: result.filename
         });
       } catch {
         resolve({
-          url: `/media/${filename}`,
+          url: `${urlPrefix}/${filename}`,
           filename
         });
       }

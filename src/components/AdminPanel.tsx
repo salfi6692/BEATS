@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { convertImageToWebP, uploadAndSaveWebP, uploadDocumentFile, uploadDirectImage } from '../utils/imageToWebp';
 import { SlideItem, GalleryPhotoItem, SectionKey, MarqueeItem } from '../types/settings';
@@ -46,15 +46,23 @@ import {
   Edit,
   RefreshCw,
   Check,
+  Folder,
+  FolderOpen,
   FolderDown,
-  Save
+  Save,
+  Menu,
+  FileSpreadsheet
 } from 'lucide-react';
+import { MenuManager } from './admin/MenuManager';
+import { PageDesigner } from './admin/PageDesigner';
+import { PagePoliciesSettings } from './admin/PagePoliciesSettings';
 
 interface AdminPanelProps {
   onBackToSite: () => void;
+  onNavigateToRoute?: (route: string) => void;
 }
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite, onNavigateToRoute }) => {
   const {
     settings,
     updateSettings,
@@ -76,8 +84,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
   // Active admin tab
   const [activeTab, setActiveTab] = useState<
-    'general' | 'leadership' | 'marquee' | 'slider' | 'sections' | 'ordering' | 'gallery' | 'content' | 'appearance' | 'metrics'
+    | 'general'
+    | 'menus'
+    | 'page-designer'
+    | 'page-policies'
+    | 'leadership'
+    | 'marquee'
+    | 'slider'
+    | 'sections'
+    | 'ordering'
+    | 'gallery'
+    | 'content'
+    | 'appearance'
+    | 'metrics'
   >('general');
+  const [designerTargetPageId, setDesignerTargetPageId] = useState<string | undefined>(undefined);
   const [saveToast, setSaveToast] = useState(false);
   const [isConvertingImage, setIsConvertingImage] = useState(false);
   const [logoError, setLogoError] = useState(false);
@@ -126,6 +147,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const [isRebuildingZip, setIsRebuildingZip] = useState(false);
   const [rebuildZipMessage, setRebuildZipMessage] = useState('');
 
+  // Media upload path configuration state
+  const [uploadPathInput, setUploadPathInput] = useState(settings.mediaUploadPath || '/media');
+  const [isSavingPath, setIsSavingPath] = useState(false);
+  const [pathSaveSuccess, setPathSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (settings.mediaUploadPath) {
+      setUploadPathInput(settings.mediaUploadPath);
+    }
+  }, [settings.mediaUploadPath]);
+
+  const handleApplyUploadPath = async (newPath: string) => {
+    let cleaned = newPath.trim().replace(/\\/g, '/');
+    if (!cleaned) cleaned = '/media';
+    if (!cleaned.startsWith('/')) cleaned = `/${cleaned}`;
+    cleaned = cleaned.replace(/\/+$/, '');
+    
+    setIsSavingPath(true);
+    updateSettings({ mediaUploadPath: cleaned });
+    setUploadPathInput(cleaned);
+    const res = await saveSettingsPermanently({ mediaUploadPath: cleaned });
+    setIsSavingPath(false);
+    if (res.success) {
+      setPathSaveSuccess(true);
+      setTimeout(() => setPathSaveSuccess(false), 3000);
+      showNotification();
+    }
+  };
+
   const showNotification = () => {
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
@@ -150,10 +200,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleLeadershipMdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting MD photo to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'leadership_md');
+      setUploadStatusMessage(`Converting MD photo to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'leadership_md', 0.85, uploadPath);
       updateSettings({ mdImage: url });
       await saveSettingsPermanently({ mdImage: url });
       showNotification();
@@ -170,10 +221,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleLeadershipDmdUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting DMD photo to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'leadership_dmd');
+      setUploadStatusMessage(`Converting DMD photo to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'leadership_dmd', 0.85, uploadPath);
       updateSettings({ dmdImage: url });
       await saveSettingsPermanently({ dmdImage: url });
       showNotification();
@@ -190,10 +242,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleAboutImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting About graphic to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'about_beats');
+      setUploadStatusMessage(`Converting About graphic to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'about_beats', 0.85, uploadPath);
       updateSettings({ aboutImage: url });
       await saveSettingsPermanently({ aboutImage: url });
       showNotification();
@@ -210,10 +263,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleAchievementsImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting Achievements ceremony photo to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'achievements_cns');
+      setUploadStatusMessage(`Converting Achievements ceremony photo to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'achievements_cns', 0.85, uploadPath);
       updateSettings({ achievementsImage: url });
       await saveSettingsPermanently({ achievementsImage: url });
       showNotification();
@@ -230,10 +284,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleWhyChooseImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting campus photo to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'why_choose');
+      setUploadStatusMessage(`Converting campus photo to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'why_choose', 0.85, uploadPath);
       updateSettings({ whyChooseImage: url });
       await saveSettingsPermanently({ whyChooseImage: url });
       showNotification();
@@ -250,10 +305,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Uploading logo directly to /media/ folder...');
-      const { url } = await uploadDirectImage(file, 'beats_logo');
+      setUploadStatusMessage(`Uploading logo directly to ${uploadPath} folder...`);
+      const { url } = await uploadDirectImage(file, 'beats_logo', uploadPath);
       setLogoError(false);
       updateSettings({ logoUrl: url });
       await saveSettingsPermanently({ logoUrl: url });
@@ -271,10 +327,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Uploading favicon directly to /media/ folder...');
-      const { url } = await uploadDirectImage(file, 'beats_favicon');
+      setUploadStatusMessage(`Uploading favicon directly to ${uploadPath} folder...`);
+      const { url } = await uploadDirectImage(file, 'beats_favicon', uploadPath);
       setFaviconError(false);
       updateSettings({ faviconUrl: url });
       await saveSettingsPermanently({ faviconUrl: url });
@@ -292,10 +349,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleProspectusUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage(`Uploading document ${file.name} to /media/ folder...`);
-      const { url } = await uploadDocumentFile(file, 'prospectus');
+      setUploadStatusMessage(`Uploading document ${file.name} to ${uploadPath} folder...`);
+      const { url } = await uploadDocumentFile(file, 'prospectus', uploadPath);
       updateSettings({ prospectusUrl: url });
       await saveSettingsPermanently({ prospectusUrl: url });
       showNotification();
@@ -312,10 +370,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleSlideImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting slide image to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'hero_slide');
+      setUploadStatusMessage(`Converting slide image to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'hero_slide', 0.85, uploadPath);
       setNewSlideImage(url);
     } catch (err) {
       console.error(err);
@@ -330,10 +389,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
   const handleGalleryPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Converting photo to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
+      setUploadStatusMessage(`Converting photo to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'gallery_photo', 0.85, uploadPath);
       setNewPhotoImage(url);
     } catch (err) {
       console.error(err);
@@ -347,10 +407,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
   // Replace image directly on an existing slide
   const handleReplaceSlideImage = async (slideId: string, file: File) => {
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Replacing slide image, converting to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'hero_slide');
+      setUploadStatusMessage(`Replacing slide image, converting to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'hero_slide', 0.85, uploadPath);
       const updated = settings.slides.map((s) =>
         s.id === slideId ? { ...s, image: url } : s
       );
@@ -453,10 +514,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
 
   // Replace photo directly on an existing gallery item
   const handleReplacePhotoImage = async (photoId: string, file: File) => {
+    const uploadPath = settings.mediaUploadPath || '/media';
     try {
       setIsConvertingImage(true);
-      setUploadStatusMessage('Replacing gallery photo, converting to WebP & saving to /media folder...');
-      const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
+      setUploadStatusMessage(`Replacing gallery photo, converting to WebP & saving to ${uploadPath} folder...`);
+      const { url } = await uploadAndSaveWebP(file, 'gallery_photo', 0.85, uploadPath);
       const updated = settings.galleryPhotos.map((p) =>
         p.id === photoId ? { ...p, image: url } : p
       );
@@ -922,6 +984,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
           </button>
 
           <button
+            onClick={() => setActiveTab('menus')}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'menus'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <Menu className="w-4 h-4" />
+            Menu &amp; Navigation ({settings.menuItems?.length || 0})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('page-designer')}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'page-designer'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            Page Designer ({settings.customPages?.length || 0})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('page-policies')}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'page-policies'
+                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
+                : 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-800'
+            }`}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Pages &amp; Policies
+          </button>
+
+          <button
             onClick={() => setActiveTab('leadership')}
             className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2 transition-all cursor-pointer ${
               activeTab === 'leadership'
@@ -1030,6 +1128,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
           </button>
         </div>
 
+        {/* TAB: Menu & Navigation Architecture */}
+        {activeTab === 'menus' && (
+          <MenuManager
+            onOpenPageDesigner={(pageId) => {
+              setDesignerTargetPageId(pageId);
+              setActiveTab('page-designer');
+            }}
+            onNavigateToRoute={(route) => {
+              onBackToSite();
+              if (onNavigateToRoute) onNavigateToRoute(route);
+            }}
+          />
+        )}
+
+        {/* TAB: Page Designer & Visual Block Builder */}
+        {activeTab === 'page-designer' && (
+          <PageDesigner
+            initialPageId={designerTargetPageId}
+            onNavigateToRoute={(route) => {
+              onBackToSite();
+              if (onNavigateToRoute) onNavigateToRoute(route);
+            }}
+          />
+        )}
+
+        {/* TAB: Page Policies, Vouchers, Houses & Social */}
+        {activeTab === 'page-policies' && (
+          <PagePoliciesSettings />
+        )}
+
         {/* TAB 1: General & Branding */}
         {activeTab === 'general' && (
           <div className="space-y-6">
@@ -1097,13 +1225,125 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
               </div>
             </div>
 
+            {/* Images & Documents Upload Location Settings Card */}
+            <div className="bg-slate-900/90 border border-amber-500/40 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div className="space-y-2 max-w-3xl text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-950/80 border border-amber-500/50 text-amber-300 text-xs font-bold">
+                    <Folder className="w-3.5 h-3.5" />
+                    <span>Uploads &amp; Media Storage Settings</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                    Images &amp; Documents Upload Location
+                  </h3>
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    Set the target folder path where all uploaded images (WebP slides, gallery photos, logos, favicons) and documents (prospectus PDFs) are saved.
+                    The current default is <code className="text-amber-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded">/media</code>, and you can change it to any directory such as <code className="text-amber-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded">/abc/media</code> or <code className="text-amber-300 font-mono bg-slate-950 px-1.5 py-0.5 rounded">/uploads</code> to match your cPanel or server requirements.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-slate-800 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-7 space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-200 mb-2">
+                      Target Storage Directory
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 font-mono text-sm">
+                          <FolderOpen className="w-4 h-4 text-amber-400" />
+                        </div>
+                        <input
+                          type="text"
+                          value={uploadPathInput}
+                          onChange={(e) => setUploadPathInput(e.target.value)}
+                          placeholder="/abc/media"
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl text-white text-sm font-mono tracking-wide"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyUploadPath(uploadPathInput)}
+                        disabled={isSavingPath}
+                        className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:bg-amber-500/50 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer shrink-0"
+                      >
+                        {isSavingPath ? (
+                          <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                        ) : pathSaveSuccess ? (
+                          <Check className="w-4 h-4 text-slate-950" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        <span>{pathSaveSuccess ? 'Saved to Disk!' : 'Apply & Save Path'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Presets */}
+                  <div>
+                    <span className="text-xs font-semibold text-slate-400 block mb-2">
+                      Quick Location Presets (Click to apply):
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { label: 'Default: /media', path: '/media' },
+                        { label: 'Custom: /abc/media', path: '/abc/media' },
+                        { label: 'Uploads: /uploads', path: '/uploads' },
+                        { label: 'Assets: /assets/media', path: '/assets/media' },
+                      ].map((preset) => (
+                        <button
+                          key={preset.path}
+                          type="button"
+                          onClick={() => handleApplyUploadPath(preset.path)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all border cursor-pointer ${
+                            (settings.mediaUploadPath || '/media') === preset.path
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm'
+                              : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Diagnostic Live Routing Preview */}
+                <div className="lg:col-span-5 bg-slate-950/90 border border-slate-800 rounded-xl p-4 text-xs space-y-2.5 font-mono">
+                  <div className="text-slate-400 uppercase tracking-wider text-[10px] font-bold border-b border-slate-800/80 pb-1.5 flex items-center justify-between">
+                    <span>Path Routing Preview</span>
+                    <span className="text-emerald-400 font-sans font-semibold">Active</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Active Upload Path:</span>
+                    <span className="text-amber-300 font-bold text-sm">
+                      {settings.mediaUploadPath || '/media'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">cPanel public_html Target:</span>
+                    <span className="text-emerald-300">
+                      public_html{(settings.mediaUploadPath || '/media').startsWith('/') ? (settings.mediaUploadPath || '/media') : `/${settings.mediaUploadPath || '/media'}`}/
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[11px]">Sample Generated Image URL:</span>
+                    <span className="text-blue-300 break-all">
+                      {(settings.mediaUploadPath || '/media').startsWith('/') ? (settings.mediaUploadPath || '/media') : `/${settings.mediaUploadPath || '/media'}`}/hero_slide_1234.webp
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8">
               <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
                 <Settings className="w-5 h-5 text-amber-400" />
                 Site Identity, Links &amp; Logo
               </h3>
               <p className="text-slate-400 text-sm mb-6">
-                Uploaded images and files are saved directly into <code className="text-amber-300 font-mono">/media/</code>. Logos and favicons preserve their crisp PNG format with transparency and are not converted to WebP.
+                Uploaded images and files are saved directly into <code className="text-amber-300 font-mono">{settings.mediaUploadPath || '/media'}</code>. Logos and favicons preserve their crisp PNG format with transparency and are not converted to WebP.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -3886,7 +4126,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
             <form onSubmit={handleSaveEditedSlide} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Replace Slide Photo (Auto WebP &amp; Save to /media)
+                  Replace Slide Photo (Auto WebP &amp; Save to {settings.mediaUploadPath || '/media'})
                 </label>
                 <div className="flex items-center gap-3">
                   <label className="cursor-pointer px-4 py-2 bg-blue-900/60 hover:bg-blue-800 text-blue-200 rounded-xl text-xs font-semibold border border-blue-700/50 flex items-center gap-1.5 transition-colors">
@@ -3898,10 +4138,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
+                          const uploadPath = settings.mediaUploadPath || '/media';
                           try {
                             setIsConvertingImage(true);
-                            setUploadStatusMessage('Converting to WebP & saving to media folder...');
-                            const { url } = await uploadAndSaveWebP(file, 'hero_slide');
+                            setUploadStatusMessage(`Converting to WebP & saving to ${uploadPath} folder...`);
+                            const { url } = await uploadAndSaveWebP(file, 'hero_slide', 0.85, uploadPath);
                             setEditSlideImage(url);
                           } catch (err) {
                             console.error(err);
@@ -4020,7 +4261,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
             <form onSubmit={handleSaveEditedPhoto} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Replace Photo (Auto WebP &amp; Save to /media)
+                  Replace Photo (Auto WebP &amp; Save to {settings.mediaUploadPath || '/media'})
                 </label>
                 <div className="flex items-center gap-3">
                   <label className="cursor-pointer px-4 py-2 bg-blue-900/60 hover:bg-blue-800 text-blue-200 rounded-xl text-xs font-semibold border border-blue-700/50 flex items-center gap-1.5 transition-colors">
@@ -4032,10 +4273,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToSite }) => {
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
+                          const uploadPath = settings.mediaUploadPath || '/media';
                           try {
                             setIsConvertingImage(true);
-                            setUploadStatusMessage('Converting to WebP & saving to media folder...');
-                            const { url } = await uploadAndSaveWebP(file, 'gallery_photo');
+                            setUploadStatusMessage(`Converting to WebP & saving to ${uploadPath} folder...`);
+                            const { url } = await uploadAndSaveWebP(file, 'gallery_photo', 0.85, uploadPath);
                             setEditPhotoImage(url);
                           } catch (err) {
                             console.error(err);

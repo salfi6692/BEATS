@@ -68,9 +68,17 @@ async function persistSettingsToServer(latestSettings: SiteSettings): Promise<{ 
 
 function mergeSettings(target: SiteSettings, source: any): SiteSettings {
   if (!source || typeof source !== 'object') return target;
+
+  const deletedPageIds: string[] = Array.isArray(source.deletedPageIds) ? source.deletedPageIds : [];
+  const deletedMenuItemIds: string[] = Array.isArray(source.deletedMenuItemIds) ? source.deletedMenuItemIds : [];
+  const deletedPageSet = new Set(deletedPageIds);
+  const deletedMenuSet = new Set(deletedMenuItemIds);
+
   return {
     ...target,
     ...source,
+    deletedPageIds,
+    deletedMenuItemIds,
     sections: {
       ...target.sections,
       ...(source.sections || {})
@@ -84,6 +92,28 @@ function mergeSettings(target: SiteSettings, source: any): SiteSettings {
     galleryPhotos: Array.isArray(source.galleryPhotos) && source.galleryPhotos.length > 0
       ? source.galleryPhotos
       : target.galleryPhotos,
+    menuItems: (() => {
+      const rawSourceItems: any[] = Array.isArray(source.menuItems)
+        ? source.menuItems
+        : target.menuItems;
+      const filtered = rawSourceItems.filter((item) => !deletedMenuSet.has(item.id) && !deletedMenuSet.has(item.route));
+      return filtered.map((item) => {
+        if (!item.pageId) {
+          const match = target.menuItems.find((t) => t.id === item.id || t.route === item.route);
+          if (match?.pageId) {
+            return { ...item, pageId: match.pageId };
+          }
+        }
+        return item;
+      });
+    })(),
+    customPages: (() => {
+      if (Array.isArray(source.customPages)) {
+        // The user already has stored customPages list. Respect their deletions!
+        return source.customPages.filter((p: any) => !deletedPageSet.has(p.id) && !deletedPageSet.has(p.slug));
+      }
+      return target.customPages.filter((p) => !deletedPageSet.has(p.id) && !deletedPageSet.has(p.slug));
+    })(),
     marquee: {
       ...target.marquee,
       ...(source.marquee || {}),
@@ -175,7 +205,15 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             // 3. Otherwise server is newer or equal:
             const mergedFromServer = mergeSettings(DEFAULT_SITE_SETTINGS, serverData);
 
-            // Protect any custom uploaded media paths (/media/ or data:) from being replaced by remote fallbacks
+            // Protect any custom uploaded media paths (/media/, custom mediaUploadPath, or data:) from being replaced by remote fallbacks
+            const isLocalMedia = (val: string | undefined) => {
+              if (!val || typeof val !== 'string') return false;
+              if (val.includes('/media/')) return true;
+              if (prev.mediaUploadPath && val.includes(prev.mediaUploadPath)) return true;
+              if (val.startsWith('data:') || val.startsWith('blob:')) return true;
+              return false;
+            };
+
             const mediaKeys: (keyof SiteSettings)[] = [
               'logoUrl', 'faviconUrl', 'prospectusUrl', 'mdImage', 'dmdImage',
               'aboutImage', 'achievementsImage', 'whyChooseImage'
@@ -185,8 +223,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             for (const key of mediaKeys) {
               const localVal = prev[key] as string;
               const serverVal = serverData[key] as string;
-              if (localVal && (localVal.includes('/media/') || localVal.startsWith('data:') || localVal.startsWith('blob:'))) {
-                if (!serverVal || !serverVal.includes('/media/') || localTimestamp >= serverTimestamp) {
+              if (isLocalMedia(localVal)) {
+                if (!isLocalMedia(serverVal) || localTimestamp >= serverTimestamp) {
                   (finalMerged as any)[key] = localVal;
                   if (localVal !== serverVal) hasLocalMediaOverride = true;
                 }
@@ -197,8 +235,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (Array.isArray(prev.slides) && Array.isArray(finalMerged.slides)) {
               finalMerged.slides = finalMerged.slides.map((s, idx) => {
                 const prevSlide = prev.slides.find((ps) => ps.id === s.id) || prev.slides[idx];
-                if (prevSlide && prevSlide.image && (prevSlide.image.includes('/media/') || prevSlide.image.startsWith('data:'))) {
-                  if (!s.image || !s.image.includes('/media/')) {
+                if (prevSlide && isLocalMedia(prevSlide.image)) {
+                  if (!isLocalMedia(s.image)) {
                     hasLocalMediaOverride = true;
                     return { ...s, image: prevSlide.image };
                   }
@@ -211,8 +249,8 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (Array.isArray(prev.galleryPhotos) && Array.isArray(finalMerged.galleryPhotos)) {
               finalMerged.galleryPhotos = finalMerged.galleryPhotos.map((p, idx) => {
                 const prevPhoto = prev.galleryPhotos.find((pp) => pp.id === p.id) || prev.galleryPhotos[idx];
-                if (prevPhoto && prevPhoto.image && (prevPhoto.image.includes('/media/') || prevPhoto.image.startsWith('data:'))) {
-                  if (!p.image || !p.image.includes('/media/')) {
+                if (prevPhoto && isLocalMedia(prevPhoto.image)) {
+                  if (!isLocalMedia(p.image)) {
                     hasLocalMediaOverride = true;
                     return { ...p, image: prevPhoto.image };
                   }

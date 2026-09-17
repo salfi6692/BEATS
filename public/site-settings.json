@@ -3,6 +3,7 @@
   "tagline": "A Prestigious Education Network Under Bahria Foundation (Pakistan Navy)",
   "logoUrl": "https://beats.com.pk/wp-content/uploads/2023/04/Beats-logo.png",
   "faviconUrl": "https://beats.com.pk/wp-content/uploads/2023/04/cropped-beats-fav-32x32.png",
+  "mediaUploadPath": "/media",
   "navyThemeShade": "deep-navy",
   "fontSizeScale": "normal",
   "accentColor": "#f59e0b",

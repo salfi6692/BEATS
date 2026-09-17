@@ -23,7 +23,28 @@ import {
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 
+export type PortalRoute = string;
+
+interface NavSubItem {
+  label: string;
+  action?: () => void;
+  section?: string;
+}
+
+interface NavItem {
+  id: string;
+  label: string;
+  route: PortalRoute;
+  hasDropdown?: boolean;
+  onClick?: () => void;
+  action?: () => void;
+  section?: string;
+  items?: NavSubItem[];
+}
+
 interface NavbarProps {
+  currentRoute?: PortalRoute;
+  onNavigateRoute: (route: PortalRoute) => void;
   onOpenAdmissionModal: () => void;
   onOpenProspectusModal: () => void;
   onOpenLeadershipModal: (id: 'md' | 'dmd') => void;
@@ -32,6 +53,8 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
+  currentRoute = 'home',
+  onNavigateRoute,
   onOpenAdmissionModal,
   onOpenProspectusModal,
   onOpenLeadershipModal,
@@ -49,65 +72,38 @@ export const Navbar: React.FC<NavbarProps> = ({
     onNavigateSection(sectionId);
   };
 
-  const navLinks = [
-    { id: 'home', label: 'Home', section: 'hero' },
-    { 
-      id: 'about', 
-      label: 'About', 
-      section: 'about',
-      hasDropdown: true,
-      items: [
-        { label: 'Introduction & History (1998)', section: 'about' },
-        { label: 'Vision, Mission & Objectives', section: 'about' },
-        { label: 'BEATS Committee & Structure', section: 'about' },
-        { label: 'Institutional Footprint (BFEIs)', section: 'bfeis' },
-        { label: 'Campuses Network (North, Centre, South)', section: 'campuses' },
-      ]
-    },
-    { id: 'md-message', label: "MD's Message", action: () => onOpenLeadershipModal('md') },
-    { 
-      id: 'admission', 
-      label: 'Admission', 
-      section: 'admission',
-      hasDropdown: true,
-      items: [
-        { label: 'Admission Procedure', action: onOpenAdmissionModal },
-        { label: 'Fees Policy & Structure', section: 'streams' },
-        { label: 'Download Prospectus (PDF)', action: onOpenProspectusModal },
-        { label: 'Online Application Portal', action: onOpenAdmissionModal },
-      ]
-    },
-    { 
-      id: 'academics', 
-      label: 'Academics', 
-      section: 'academics',
-      hasDropdown: true,
-      items: [
-        { label: 'Montessori & Primary Section', section: 'academics' },
-        { label: 'Secondary (SSC) & HSSC College', section: 'academics' },
-        { label: 'Cambridge O Level (CAIE)', section: 'academics' },
-        { label: 'Academic Session & Promotion Policy', section: 'academics' },
-        { label: 'Religious & Moral Education', section: 'academics' },
-        { label: 'BISE Board Honors & Results (94%)', section: 'achievements' },
-      ]
-    },
-    { 
-      id: 'campus-life', 
-      label: 'Campus Life', 
-      section: 'gallery',
-      hasDropdown: true,
-      items: [
-        { label: 'Facilities & Science Resources', section: 'gallery' },
-        { label: 'Learning Environment & Houses', section: 'gallery' },
-        { label: 'Activities & Sports Competitions', section: 'gallery' },
-        { label: 'Photo & Event Gallery', section: 'gallery' },
-        { label: 'Timing, Vacations & Uniform', section: 'gallery' },
-      ]
-    },
-    { id: 'campuses', label: 'Campuses', section: 'campuses' },
-    { id: 'scholarship', label: 'Scholarship', section: 'achievements' },
-    { id: 'contact', label: 'Contact Us', section: 'contact' },
-  ];
+  // Dynamically build navLinks from settings.menuItems
+  const rawMenuItems = (settings.menuItems && settings.menuItems.length > 0)
+    ? settings.menuItems
+    : [];
+
+  const navLinks: NavItem[] = rawMenuItems
+    .filter((m) => m.visible !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map((m) => {
+      const hasDropdown = Boolean(m.hasDropdown && m.items && m.items.length > 0);
+      return {
+        id: m.id,
+        label: m.label,
+        route: m.route as PortalRoute,
+        hasDropdown,
+        onClick: () => onNavigateRoute(m.route as PortalRoute),
+        items: m.items?.map((sub) => ({
+          label: sub.label,
+          action: () => {
+            if (sub.link && (sub.link.startsWith('http') || sub.link.startsWith('https'))) {
+              window.open(sub.link, '_blank', 'noopener,noreferrer');
+            } else if (sub.route === 'admission-modal') {
+              onOpenAdmissionModal();
+            } else if (sub.route === 'prospectus-modal') {
+              onOpenProspectusModal();
+            } else if (sub.route) {
+              onNavigateRoute(sub.route as PortalRoute);
+            }
+          }
+        }))
+      };
+    });
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs transition-all">
@@ -174,14 +170,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <button
                     onClick={() => {
-                      if (link.action) {
+                      if (link.onClick) {
+                        link.onClick();
+                      } else if (link.action) {
                         link.action();
                       } else if (link.section) {
                         handleNavClick(link.section);
                       }
                     }}
                     className={`relative z-10 flex items-center gap-1 px-3.5 py-2 rounded-lg text-xs lg:text-[13px] font-bold transition-colors duration-200 cursor-pointer ${
-                      isHovered || isDropdownOpen ? 'text-amber-300' : 'text-slate-700'
+                      currentRoute === link.route || isHovered || isDropdownOpen 
+                        ? 'text-amber-300' 
+                        : 'text-slate-700'
                     }`}
                   >
                     <span>{link.label}</span>
@@ -194,15 +194,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                     )}
                   </button>
 
-                  {/* Animated Background Navy Pill on Hover */}
-                  {isHovered && (
+                  {/* Active or Hover Background Navy Pill */}
+                  {(isHovered || currentRoute === link.route) && (
                     <motion.div
                       layoutId="navHoverNavy"
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-                      className="absolute inset-0 z-0 rounded-lg bg-gradient-to-r from-[#071326] via-[#0B1E3F] to-[#0A1A36] border border-blue-700/60 shadow-md shadow-blue-950/20"
+                      className={`absolute inset-0 z-0 rounded-lg ${
+                        currentRoute === link.route
+                          ? 'bg-blue-950 text-white border border-amber-400/40 shadow-sm'
+                          : 'bg-gradient-to-r from-[#071326] via-[#0B1E3F] to-[#0A1A36] border border-blue-700/60 shadow-md shadow-blue-950/20'
+                      }`}
                     />
                   )}
 
@@ -347,14 +351,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div key={link.id} className="py-0.5">
                 <button
                   onClick={() => {
-                    if (link.action) {
-                      setMobileMenuOpen(false);
+                    setMobileMenuOpen(false);
+                    if (link.onClick) {
+                      link.onClick();
+                    } else if (link.action) {
                       link.action();
                     } else if (link.section) {
                       handleNavClick(link.section);
                     }
                   }}
-                  className="w-full text-left px-3 py-2 rounded-lg font-bold text-slate-100 hover:text-amber-300 hover:bg-[#0B1E3F] transition-all flex items-center justify-between"
+                  className={`w-full text-left px-3 py-2 rounded-lg font-bold transition-all flex items-center justify-between ${
+                    currentRoute === link.route
+                      ? 'bg-blue-900 text-amber-300 border-l-4 border-amber-400'
+                      : 'text-slate-100 hover:text-amber-300 hover:bg-[#0B1E3F]'
+                  }`}
                 >
                   <span>{link.label}</span>
                   {link.hasDropdown && <ChevronDown className="w-4 h-4 text-slate-500" />}

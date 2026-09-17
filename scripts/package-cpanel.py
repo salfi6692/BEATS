@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import zipfile
 import sys
+import json
 
 def main():
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,16 +54,32 @@ def main():
             if os.path.isfile(s):
                 shutil.copy2(s, d)
 
-    # Ensure media folder is in dist
-    media_src = os.path.join(root_dir, 'public', 'media')
-    media_dest = os.path.join(dist_dir, 'media')
-    os.makedirs(media_dest, exist_ok=True)
-    if os.path.exists(media_src):
-        for item in os.listdir(media_src):
-            s = os.path.join(media_src, item)
-            d = os.path.join(media_dest, item)
-            if os.path.isfile(s):
-                shutil.copy2(s, d)
+    # Ensure default media folder and configured mediaUploadPath are copied to dist
+    upload_paths = ['media']
+    try:
+        if os.path.exists(settings_src):
+            with open(settings_src, 'r', encoding='utf-8') as f:
+                s_json = json.load(f)
+                custom_path = s_json.get('mediaUploadPath', '')
+                if custom_path:
+                    clean_custom = '/'.join([p for p in custom_path.replace('\\', '/').strip('/').split('/') if p and p not in ('.', '..')])
+                    if clean_custom and clean_custom not in upload_paths:
+                        upload_paths.append(clean_custom)
+    except Exception as e:
+        print("Notice: could not parse mediaUploadPath from settings:", e)
+
+    for upath in upload_paths:
+        src_path = os.path.join(root_dir, 'public', upath)
+        dest_path = os.path.join(dist_dir, upath)
+        os.makedirs(src_path, exist_ok=True)
+        os.makedirs(dest_path, exist_ok=True)
+        if os.path.exists(src_path):
+            for root, dirs, files in os.walk(src_path):
+                rel = os.path.relpath(root, src_path)
+                target_sub = dest_path if rel == '.' else os.path.join(dest_path, rel)
+                os.makedirs(target_sub, exist_ok=True)
+                for f in files:
+                    shutil.copy2(os.path.join(root, f), os.path.join(target_sub, f))
 
     zip_names = ['cpanel-public-html.zip', 'beats-portal-build.zip']
 

@@ -6,15 +6,25 @@ interface FooterProps {
   onOpenProspectus: () => void;
   onOpenAdmission: () => void;
   onNavigateSection: (sectionId: string) => void;
+  onNavigateRoute?: (route: any) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenProspectus,
   onOpenAdmission,
-  onNavigateSection
+  onNavigateSection,
+  onNavigateRoute
 }) => {
   const { settings } = useSettings();
   const [viewCount, setViewCount] = useState<number>(14258);
+
+  const handleRouteOrSection = (route: string, sectionId?: string) => {
+    if (onNavigateRoute) {
+      onNavigateRoute(route);
+    } else if (sectionId) {
+      onNavigateSection(sectionId);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -123,7 +133,7 @@ export const Footer: React.FC<FooterProps> = ({
               {settings.sections.aboutOverview && (
                 <li>
                   <button
-                    onClick={() => onNavigateSection('about')}
+                    onClick={() => handleRouteOrSection('about', 'about')}
                     className="hover:text-amber-400 transition-colors cursor-pointer"
                   >
                     About BEATS
@@ -133,7 +143,7 @@ export const Footer: React.FC<FooterProps> = ({
               {settings.sections.academicStreams && (
                 <li>
                   <button
-                    onClick={() => onNavigateSection('academics')}
+                    onClick={() => handleRouteOrSection('academics', 'academics')}
                     className="hover:text-amber-400 transition-colors cursor-pointer"
                   >
                     Academic Streams
@@ -143,7 +153,7 @@ export const Footer: React.FC<FooterProps> = ({
               {settings.sections.achievements && (
                 <li>
                   <button
-                    onClick={() => onNavigateSection('achievements')}
+                    onClick={() => handleRouteOrSection('academics', 'achievements')}
                     className="hover:text-amber-400 transition-colors cursor-pointer"
                   >
                     Academic Achievements
@@ -153,7 +163,7 @@ export const Footer: React.FC<FooterProps> = ({
               {settings.sections.regionalDirectory && (
                 <li>
                   <button
-                    onClick={() => onNavigateSection('campuses')}
+                    onClick={() => handleRouteOrSection('campuses', 'campuses')}
                     className="hover:text-amber-400 transition-colors cursor-pointer"
                   >
                     Campuses Network
@@ -163,16 +173,16 @@ export const Footer: React.FC<FooterProps> = ({
               {settings.sections.campusGallery && (
                 <li>
                   <button
-                    onClick={() => onNavigateSection('gallery')}
+                    onClick={() => handleRouteOrSection('campus-life', 'gallery')}
                     className="hover:text-amber-400 transition-colors cursor-pointer"
                   >
-                    Campus Life &amp; Gallery
+                    Campus Life &amp; Uniform
                   </button>
                 </li>
               )}
               <li>
                 <button
-                  onClick={onOpenAdmission}
+                  onClick={() => handleRouteOrSection('admission')}
                   className="hover:text-amber-400 transition-colors cursor-pointer"
                 >
                   Admissions 2025–26
@@ -184,9 +194,36 @@ export const Footer: React.FC<FooterProps> = ({
           {/* Col 3: Useful Links & External Portals */}
           <div className="lg:col-span-2 space-y-4">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider pb-1 border-b border-slate-800">
-              Key Institutions
+              Key Portals
             </h4>
             <ul className="space-y-2.5 text-xs text-slate-400">
+              <li>
+                <button
+                  onClick={() => handleRouteOrSection('scholarship')}
+                  className="hover:text-amber-400 transition-colors flex items-center gap-1 text-left cursor-pointer"
+                >
+                  <span>Higher Studies &amp; Scholarships</span>
+                  <ArrowUpRight className="w-3 h-3 text-amber-400" />
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleRouteOrSection('alumni')}
+                  className="hover:text-amber-400 transition-colors flex items-center gap-1 text-left cursor-pointer"
+                >
+                  <span>Alumni Registration Form</span>
+                  <ArrowUpRight className="w-3 h-3 text-amber-400" />
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleRouteOrSection('contact')}
+                  className="hover:text-amber-400 transition-colors flex items-center gap-1 text-left cursor-pointer"
+                >
+                  <span>Regional Offices Directory</span>
+                  <ArrowUpRight className="w-3 h-3 text-amber-400" />
+                </button>
+              </li>
               <li>
                 <a
                   href="https://bahriafoundation.com/"
@@ -194,7 +231,7 @@ export const Footer: React.FC<FooterProps> = ({
                   rel="noreferrer"
                   className="hover:text-amber-400 transition-colors flex items-center gap-1"
                 >
-                  <span>Bahria Foundation</span>
+                  <span>Bahria Foundation Portal</span>
                   <ExternalLink className="w-3 h-3 text-slate-500" />
                 </a>
               </li>
@@ -205,40 +242,7 @@ export const Footer: React.FC<FooterProps> = ({
                   rel="noreferrer"
                   className="hover:text-amber-400 transition-colors flex items-center gap-1"
                 >
-                  <span>Pakistan Navy</span>
-                  <ExternalLink className="w-3 h-3 text-slate-500" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://beats.com.pk/higherstudiesscholarship/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-amber-400 transition-colors flex items-center gap-1"
-                >
-                  <span>Higher Studies Scholarship</span>
-                  <ExternalLink className="w-3 h-3 text-slate-500" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://beats.com.pk/alumni-registration/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-amber-400 transition-colors flex items-center gap-1"
-                >
-                  <span>Alumni Registration</span>
-                  <ExternalLink className="w-3 h-3 text-slate-500" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://beats.com.pk/admission/#fees-policy"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-amber-400 transition-colors flex items-center gap-1"
-                >
-                  <span>Fees &amp; Welfare Policy</span>
+                  <span>Pakistan Navy Official</span>
                   <ExternalLink className="w-3 h-3 text-slate-500" />
                 </a>
               </li>

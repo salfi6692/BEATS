@@ -29,12 +29,27 @@ if (!$data || (empty($data['base64']) && empty($data['dataUrl']))) {
     exit();
 }
 
-$mediaDir = realpath(__DIR__ . '/../media');
-if (!$mediaDir) {
-    $mediaDir = __DIR__ . '/../media';
-    if (!file_exists($mediaDir)) {
-        mkdir($mediaDir, 0755, true);
+// Parse and sanitize target upload directory (e.g., /media, /abc/media, /uploads)
+$rawUploadPath = isset($data['uploadPath']) ? trim((string)$data['uploadPath']) : '/media';
+$rawUploadPath = str_replace('\\', '/', $rawUploadPath);
+$rawSegments = explode('/', trim($rawUploadPath, '/'));
+$safeSegments = [];
+foreach ($rawSegments as $seg) {
+    $seg = trim($seg);
+    if ($seg !== '' && $seg !== '.' && $seg !== '..') {
+        $cleaned = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $seg);
+        if ($cleaned !== '') {
+            $safeSegments[] = $cleaned;
+        }
     }
+}
+$cleanRelPath = !empty($safeSegments) ? implode('/', $safeSegments) : 'media';
+$urlPrefix = '/' . $cleanRelPath;
+
+$publicRoot = dirname(__DIR__);
+$targetDir = $publicRoot . '/' . $cleanRelPath;
+if (!file_exists($targetDir)) {
+    mkdir($targetDir, 0755, true);
 }
 
 // Extract and sanitize filename
@@ -57,15 +72,15 @@ if ($binary === false) {
     exit();
 }
 
-$targetPath = $mediaDir . '/' . $filename;
+$targetPath = $targetDir . '/' . $filename;
 if (file_put_contents($targetPath, $binary) !== false) {
     echo json_encode([
         'success' => true,
-        'url' => '/media/' . $filename,
+        'url' => $urlPrefix . '/' . $filename,
         'filename' => $filename,
         'size' => strlen($binary)
     ]);
 } else {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Failed to write file to public_html/media directory. Check folder permissions.']);
+    echo json_encode(['success' => false, 'error' => 'Failed to write file to target directory (' . $cleanRelPath . '). Check folder permissions.']);
 }

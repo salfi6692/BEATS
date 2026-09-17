@@ -37,6 +37,106 @@ export interface GalleryPhotoItem {
   caption: string;
 }
 
+export type PageBlockType =
+  | 'heading'
+  | 'text'
+  | 'image'
+  | 'video'
+  | 'buttons'
+  | 'features'
+  | 'accordion'
+  | 'callout';
+
+export interface PageBlockButton {
+  id: string;
+  label: string;
+  url: string;
+  variant: 'primary' | 'secondary' | 'gold' | 'outline';
+  isExternal?: boolean;
+}
+
+export interface PageBlockFeature {
+  id: string;
+  icon?: string;
+  title: string;
+  description: string;
+}
+
+export interface PageBlockFaq {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface PageBlock {
+  id: string;
+  type: PageBlockType;
+  // Heading
+  title?: string;
+  subtitle?: string;
+  level?: 'h1' | 'h2' | 'h3';
+  align?: 'left' | 'center' | 'right';
+  badge?: string;
+  // Text / paragraph
+  content?: string;
+  // Image
+  imageUrl?: string;
+  imageAlt?: string;
+  caption?: string;
+  imageWidth?: 'normal' | 'wide' | 'full';
+  // Video
+  videoUrl?: string; // e.g. YouTube embed, direct video mp4
+  videoTitle?: string;
+  videoCaption?: string;
+  // Buttons / Links
+  buttons?: PageBlockButton[];
+  // Features / Grid Cards
+  features?: PageBlockFeature[];
+  featuresColumns?: 2 | 3 | 4;
+  // FAQ Accordion
+  faqItems?: PageBlockFaq[];
+  // Callout Box
+  calloutType?: 'info' | 'quote' | 'navy' | 'gold';
+  quoteAuthor?: string;
+}
+
+export interface CustomPage {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  bannerImage?: string;
+  published: boolean;
+  isCorePage?: boolean;
+  useCustomLayout?: boolean;
+  metaDescription?: string;
+  blocks: PageBlock[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NavDropdownItem {
+  id: string;
+  label: string;
+  route?: string;
+  link?: string;
+  pageId?: string;
+  isExternal?: boolean;
+}
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  route: string; // matches PortalRoute or custom slug
+  pageId?: string; // id of CustomPage if custom
+  hasDropdown?: boolean;
+  visible: boolean;
+  isCustom?: boolean;
+  order?: number;
+  items?: NavDropdownItem[];
+}
+
 export type SectionKey =
   | 'hero'
   | 'statsBanner'
@@ -67,6 +167,9 @@ export interface SiteSettings {
   tagline: string;
   logoUrl: string;
   faviconUrl: string;
+  
+  // Media & Upload Directory Settings
+  mediaUploadPath?: string; // e.g. '/media' or '/abc/media'
   
   // Theme & Appearance
   navyThemeShade: 'deep-navy' | 'royal-navy' | 'midnight-navy';
@@ -183,7 +286,1026 @@ export interface SiteSettings {
   footerHelpline: string;
   footerEmail: string;
   footerAddress: string;
+
+  // Navigation Menu Customization (Add, Update, Delete)
+  menuItems: MenuItem[];
+
+  // Custom Pages Created via Page Designer
+  customPages: CustomPage[];
+
+  // Tombstones for explicitly deleted pages and menu items
+  deletedPageIds?: string[];
+  deletedMenuItemIds?: string[];
+
+  // Social & External Portals
+  socialFacebook?: string;
+  socialTwitter?: string;
+  socialYoutube?: string;
+  socialLinkedin?: string;
+  socialInstagram?: string;
+
+  // Specific Page Settings & Polices
+  admissionNotes?: string;
+  admissionBankInfo?: string;
+  campusLifeHouseColors?: string;
+  scholarshipMaxPerStudent?: string;
+  contactGoogleMapQuery?: string;
 }
+
+export const DEFAULT_MENU_ITEMS: MenuItem[] = [
+  { id: 'menu-home', label: 'Home', route: 'home', visible: true, order: 1 },
+  {
+    id: 'menu-about',
+    label: 'About',
+    route: 'about',
+    pageId: 'page-about',
+    hasDropdown: true,
+    visible: true,
+    order: 2,
+    items: [
+      { id: 'sub-about-1', label: 'Introduction & History (1998)', route: 'about' },
+      { id: 'sub-about-2', label: 'Vision, Mission & Objectives', route: 'about' },
+      { id: 'sub-about-3', label: 'BEATS Committee & Structure', route: 'about' },
+      { id: 'sub-about-4', label: 'Institutional Footprint (BFEIs)', route: 'about' },
+      { id: 'sub-about-5', label: 'Campuses Network (North, Centre, South)', route: 'campuses' }
+    ]
+  },
+  { id: 'menu-md', label: "MD's Message", route: 'md-message', pageId: 'page-md-message', visible: true, order: 3 },
+  {
+    id: 'menu-adm',
+    label: 'Admission',
+    route: 'admission',
+    pageId: 'page-admission',
+    hasDropdown: true,
+    visible: true,
+    order: 4,
+    items: [
+      { id: 'sub-adm-1', label: 'Admission Procedure & Age Criteria', route: 'admission' },
+      { id: 'sub-adm-2', label: 'Documents Required for Admission', route: 'admission' },
+      { id: 'sub-adm-3', label: 'College Dues & Fee Regulations', route: 'admission' },
+      { id: 'sub-adm-4', label: 'Interactive Admission Inquiry Form', route: 'admission' }
+    ]
+  },
+  {
+    id: 'menu-acad',
+    label: 'Academics',
+    route: 'academics',
+    pageId: 'page-academics',
+    hasDropdown: true,
+    visible: true,
+    order: 5,
+    items: [
+      { id: 'sub-acad-1', label: 'Montessori & Primary Section', route: 'academics' },
+      { id: 'sub-acad-2', label: 'Secondary (SSC) & HSSC College', route: 'academics' },
+      { id: 'sub-acad-3', label: 'Cambridge O Level (CAIE)', route: 'academics' },
+      { id: 'sub-acad-4', label: 'Academic Session & Promotion Policy', route: 'academics' },
+      { id: 'sub-acad-5', label: 'Religious & Moral Education', route: 'academics' },
+      { id: 'sub-acad-6', label: 'Faculty & Teacher Training (TTIs)', route: 'academics' }
+    ]
+  },
+  {
+    id: 'menu-campus-life',
+    label: 'Campus Life',
+    route: 'campus-life',
+    pageId: 'page-campus-life',
+    hasDropdown: true,
+    visible: true,
+    order: 6,
+    items: [
+      { id: 'sub-cl-1', label: 'Enhanced Learning Environment (ELE)', route: 'campus-life' },
+      { id: 'sub-cl-2', label: 'BEATS Houses (Jinnah, Iqbal, Tippu, Zafar)', route: 'campus-life' },
+      { id: 'sub-cl-3', label: 'Attendance (Face Recognition Protocol)', route: 'campus-life' },
+      { id: 'sub-cl-4', label: 'Student Leave Rules & Transfers', route: 'campus-life' },
+      { id: 'sub-cl-5', label: 'Summer & Winter Uniform Regulations', route: 'campus-life' }
+    ]
+  },
+  { id: 'menu-campuses', label: 'Campuses', route: 'campuses', pageId: 'page-campuses', visible: true, order: 7 },
+  { id: 'menu-scholarship', label: 'Scholarship', route: 'scholarship', pageId: 'page-scholarship', visible: true, order: 8 },
+  { id: 'menu-alumni', label: 'Alumni', route: 'alumni', pageId: 'page-alumni', visible: true, order: 9 },
+  { id: 'menu-contact', label: 'Contact Us', route: 'contact', pageId: 'page-contact', visible: true, order: 10 }
+];
+
+export const DEFAULT_CUSTOM_PAGES: CustomPage[] = [
+  // 1. About BEATS
+  {
+    id: 'page-about',
+    slug: 'about',
+    title: 'About BEATS',
+    subtitle: 'Spreading quality education and moral discipline across Pakistan since 1998, empowering over 37,000 students in 87+ institutions.',
+    badge: 'Established 1998',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Discover the history, leadership, vision, and institutional footprint of Bahria Education & Training System.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'ab-b1',
+        type: 'heading',
+        title: 'Introduction & Institutional Overview',
+        subtitle: 'Fostering intellectual vigor, moral discipline, and patriotism under the aegis of Pakistan Navy.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Institutional Footprint'
+      },
+      {
+        id: 'ab-b2',
+        type: 'text',
+        content: 'Bahria Education and Training System (BEATS) was established in 1998 under the auspices of Pakistan Navy Bahria Foundation. From its modest beginnings with a few regional campuses, BEATS has evolved into a premier national education network operating 87+ high-standard institutions across Pakistan.\n\nOur schools and colleges cater to ~37,000 students from Montessori to Higher Secondary and Cambridge O-Level. We instill naval traditions of discipline, punctuality, and honor, preparing confident leaders who serve Pakistan with distinction.'
+      },
+      {
+        id: 'ab-b3',
+        type: 'callout',
+        calloutType: 'quote',
+        content: 'Our core philosophy balances academic rigor with moral integrity. We do not just teach textbooks; we mold characters of unshakeable patriotism and ethical strength.',
+        quoteAuthor: 'Vice Admiral (R) Muhammad Amjad Khan, Managing Director Bahria Foundation'
+      },
+      {
+        id: 'ab-b4',
+        type: 'features',
+        featuresColumns: 4,
+        features: [
+          {
+            id: 'ab-f1',
+            icon: 'Shield',
+            title: 'Moral Integrity & Drill',
+            description: 'Daily assemblies, honor codes, and student leadership councils.'
+          },
+          {
+            id: 'ab-f2',
+            icon: 'Award',
+            title: 'Academic Laurels',
+            description: '94% average pass rate with top positions across BISE boards nationwide.'
+          },
+          {
+            id: 'ab-f3',
+            icon: 'BookOpen',
+            title: 'Modern Curricula',
+            description: 'English medium instruction across FBISE, BISE, and Cambridge O-Level.'
+          },
+          {
+            id: 'ab-f4',
+            icon: 'GraduationCap',
+            title: 'Teacher Training (TTIs)',
+            description: '03 dedicated institutes continuous pedagogical development for 2,400+ educators.'
+          }
+        ]
+      },
+      {
+        id: 'ab-b5',
+        type: 'video',
+        videoTitle: 'Naval Parades and Campus Life at Bahria Foundation',
+        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        videoCaption: 'Watch annual sports, parade ceremonies, and laboratory sessions at Bahria Foundation Colleges.'
+      },
+      {
+        id: 'ab-b6',
+        type: 'accordion',
+        faqItems: [
+          {
+            id: 'ab-faq1',
+            question: 'What governance structure supervises BEATS institutions?',
+            answer: 'BEATS is administered directly by the Committee of Administration and the Directorate of BEATS, chaired by Managing Director Bahria Foundation and Deputy Managing Director BEATS.'
+          },
+          {
+            id: 'ab-faq2',
+            question: 'Are BEATS colleges open to civilian students?',
+            answer: 'Yes. Admissions are conducted on merit basis and are open to civilian students as well as children of Naval and Armed Forces personnel.'
+          }
+        ]
+      },
+      {
+        id: 'ab-b7',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'ab-btn1',
+            label: 'Apply for Admission 2025-26',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'ab-btn2',
+            label: 'Explore Nationwide Campuses',
+            url: '/campuses',
+            variant: 'primary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 2. MD's Message
+  {
+    id: 'page-md-message',
+    slug: 'md-message',
+    title: "MD's Message",
+    subtitle: 'Vice Admiral (R) Muhammad Amjad Khan, Managing Director Bahria Foundation',
+    badge: 'Executive Leadership',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Read the official message and leadership vision of the Managing Director of Bahria Foundation.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'md-b1',
+        type: 'heading',
+        title: 'Guiding the Next Generation Toward Purpose & Excellence',
+        subtitle: 'Leadership, character, and national dedication through disciplined education.',
+        level: 'h2',
+        align: 'center',
+        badge: 'Vision & Mission'
+      },
+      {
+        id: 'md-b2',
+        type: 'callout',
+        calloutType: 'quote',
+        content: 'Education without moral grounding is a rudderless ship. In an era of rapid technological changes, our youth must anchor themselves in unshakeable ethical principles and relentless pursuit of knowledge.',
+        quoteAuthor: 'Vice Admiral (R) Muhammad Amjad Khan, Managing Director Bahria Foundation'
+      },
+      {
+        id: 'md-b3',
+        type: 'text',
+        content: 'It gives me immense pride to witness the transformational trajectory of Bahria Education & Training System (BEATS). Established under the auspices of Pakistan Navy, Bahria Foundation has striven tirelessly to bring high-quality, subsidized, and character-driven education to every corner of Pakistan.\n\nFrom urban metropolises to remote coastal districts in Balochistan and Sindh, BEATS colleges act as beacons of enlightenment. We ensure that merit is celebrated, character is refined, and every student is equipped to become a patriotic leader of tomorrow.'
+      },
+      {
+        id: 'md-b4',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'md-f1',
+            icon: 'Shield',
+            title: 'Moral Rectitude',
+            description: 'Cultivating honesty, civic responsibility, and mutual respect.'
+          },
+          {
+            id: 'md-f2',
+            icon: 'Award',
+            title: 'Academic Distinction',
+            description: 'Board laurels, Cambridge accreditation, and competitive examination training.'
+          },
+          {
+            id: 'md-f3',
+            icon: 'Users',
+            title: 'Nationwide Inclusivity',
+            description: 'Empowering communities through financial assistance and merit scholarships.'
+          }
+        ]
+      },
+      {
+        id: 'md-b5',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'md-btn1',
+            label: 'Explore Admission Guidelines',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'md-btn2',
+            label: 'Read About BEATS History',
+            url: '/about',
+            variant: 'outline'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 3. Admission Guidelines
+  {
+    id: 'page-admission',
+    slug: 'admission',
+    title: 'Admission Guidelines',
+    subtitle: 'Procedure, age criteria, document checklist, fee regulations, and online application portal.',
+    badge: 'Admissions 2025-26',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Comprehensive guide to admissions across all Bahria Foundation Colleges and Schools nationwide.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'adm-b1',
+        type: 'heading',
+        title: 'Admission Procedure & Age Criteria',
+        subtitle: 'Structured, transparent enrollment across Montessori, Primary, Secondary, and HSSC.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Enrollment Guide'
+      },
+      {
+        id: 'adm-b2',
+        type: 'text',
+        content: 'Admissions in Bahria Foundation Colleges are announced twice a year prior to the commencement of academic sessions. Candidate registration is conducted on prescribed application forms available at college administration offices or online through this portal.\n\nAll prospective students undergo a structured placement assessment tailored to their grade level to ensure appropriate academic placement.'
+      },
+      {
+        id: 'adm-b3',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'adm-f1',
+            icon: 'Users',
+            title: 'Montessori Section',
+            description: 'Beginner: Age 3 to 4 years. Junior: Age 4 to 5 years. Senior: Age 5 to 6 years.'
+          },
+          {
+            id: 'adm-f2',
+            icon: 'BookOpen',
+            title: 'Primary & Middle (1st - 8th)',
+            description: 'Placement assessment in English, Mathematics, and Urdu with verified school leaving certificates.'
+          },
+          {
+            id: 'adm-f3',
+            icon: 'GraduationCap',
+            title: 'SSC, HSSC & O-Level',
+            description: 'Enrollment based on 9th/10th Board marks, aptitude evaluation, and subject prerequisites.'
+          }
+        ]
+      },
+      {
+        id: 'adm-b4',
+        type: 'callout',
+        calloutType: 'gold',
+        content: 'Fee vouchers are issued through designated branches of Askari Bank Ltd and Habib Bank Ltd (HBL). Dues must be settled within the specified grace period to confirm admission seat.'
+      },
+      {
+        id: 'adm-b5',
+        type: 'accordion',
+        faqItems: [
+          {
+            id: 'adm-faq1',
+            question: 'What documents are required at the time of admission?',
+            answer: 'Required documents include: Attested Nadra Birth Certificate or Form-B, 4 recent passport-size photographs, Father/Guardian CNIC copy, Previous School Leaving Certificate (SLC), and Progress Report Cards.'
+          },
+          {
+            id: 'adm-faq2',
+            question: 'Are there fee concessions for Naval and Armed Forces wards?',
+            answer: 'Yes, designated fee concessions are provided to children of serving and retired Pakistan Navy personnel and Armed Forces wards in accordance with Foundation policies.'
+          },
+          {
+            id: 'adm-faq3',
+            question: 'Can students transfer between different Bahria Foundation campuses?',
+            answer: 'Yes, inter-campus transfer is facilitated seamlessly across all 87+ campuses nationwide with waiver of admission re-registration fee.'
+          }
+        ]
+      },
+      {
+        id: 'adm-b6',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'adm-btn1',
+            label: 'Fill Online Admission Form',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'adm-btn2',
+            label: 'Download Prospectus 2025-26',
+            url: '/admission',
+            variant: 'primary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 4. Academics & Curricula
+  {
+    id: 'page-academics',
+    slug: 'academics',
+    title: 'Academics & Curricula',
+    subtitle: 'Excellence in instruction from Montessori to Cambridge O-Level and HSSC College.',
+    badge: 'Curriculum & Streams',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/09/WhatsApp-Image-2024-09-27-at-6.14.33-PM-768x512.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Explore the academic tiers, STEM labs, faculty development, and Cambridge education at BEATS.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'acad-b1',
+        type: 'heading',
+        title: 'Multi-Tiered Academic Streams',
+        subtitle: 'Rigorous national and international curricula cultivating critical inquiry and analytical skill.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Academic Streams'
+      },
+      {
+        id: 'acad-b2',
+        type: 'text',
+        content: 'Bahria Education & Training System offers structured academic streams designed to cater to diverse student aspirations. We emphasize modern STEM integration, digital literacy, and English language fluency while fostering religious and moral consciousness.'
+      },
+      {
+        id: 'acad-b3',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'acad-f1',
+            icon: 'BookOpen',
+            title: 'Montessori & Primary Section',
+            description: 'Activity-based learning, phonics, numeracy, and character development in a caring environment.'
+          },
+          {
+            id: 'acad-f2',
+            icon: 'Award',
+            title: 'Secondary (SSC) & HSSC College',
+            description: 'Federal Board (FBISE) and regional BISE affiliations in Pre-Medical, Pre-Engineering, and ICS.'
+          },
+          {
+            id: 'acad-f3',
+            icon: 'GraduationCap',
+            title: 'Cambridge O-Level (CAIE)',
+            description: 'Internationally benchmarked education fostering independent research, debate, and global readiness.'
+          }
+        ]
+      },
+      {
+        id: 'acad-b4',
+        type: 'callout',
+        calloutType: 'navy',
+        content: 'Teacher Training Institutes (TTIs) located in North, Centre, and South regions conduct continuous capacity-building workshops, ensuring our 2,400+ educators employ cutting-edge pedagogical methodologies.'
+      },
+      {
+        id: 'acad-b5',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'acad-btn1',
+            label: 'Apply for Admission 2025-26',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'acad-btn2',
+            label: 'View Nationwide Campuses',
+            url: '/campuses',
+            variant: 'secondary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 5. Campus Life & Ethos
+  {
+    id: 'page-campus-life',
+    slug: 'campus-life',
+    title: 'Campus Life & Ethos',
+    subtitle: 'Sports, House system, drill ceremonies, Face-Recognition attendance, and co-curricular vibrancy.',
+    badge: 'Student Experience',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Discover vibrant student life, inter-house competitions, uniforms, and sports at Bahria Foundation Colleges.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'cl-b1',
+        type: 'heading',
+        title: 'Discipline, Sportsmanship & Camaraderie',
+        subtitle: 'Cultivating well-rounded personalities through structured co-curricular and sports programs.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Campus Life'
+      },
+      {
+        id: 'cl-b2',
+        type: 'text',
+        content: 'Campus life at Bahria Foundation Colleges is designed to blend academic diligence with physical vitality and teamwork. From early morning parades to inter-house football, cricket, basketball, and debate tournaments, every student is encouraged to participate actively.'
+      },
+      {
+        id: 'cl-b3',
+        type: 'features',
+        featuresColumns: 4,
+        features: [
+          {
+            id: 'cl-f1',
+            icon: 'Shield',
+            title: 'Jinnah House (Red)',
+            description: 'Motto: Unity, Faith, Discipline. Inspiring exemplary focus, duty, and perseverance.'
+          },
+          {
+            id: 'cl-f2',
+            icon: 'Award',
+            title: 'Iqbal House (Green)',
+            description: 'Motto: Knowledge, Wisdom, Action. Fostering literary distinction and intellectual inquiry.'
+          },
+          {
+            id: 'cl-f3',
+            icon: 'Anchor',
+            title: 'Tippu House (Blue)',
+            description: 'Motto: Valor, Honor, Sacrifice. Promoting physical resilience and athletic excellence.'
+          },
+          {
+            id: 'cl-f4',
+            icon: 'Users',
+            title: 'Zafar House (Yellow)',
+            description: 'Motto: Diligence, Glory, Brotherhood. Emphasizing community service and teamwork.'
+          }
+        ]
+      },
+      {
+        id: 'cl-b4',
+        type: 'callout',
+        calloutType: 'info',
+        content: 'All BEATS campuses are equipped with AI Face-Recognition Attendance systems, ensuring automated parent SMS notifications and robust campus perimeter security.'
+      },
+      {
+        id: 'cl-b5',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'cl-btn1',
+            label: 'Apply for Admission',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'cl-btn2',
+            label: 'Explore Nationwide Directory',
+            url: '/campuses',
+            variant: 'primary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 6. Campuses Network
+  {
+    id: 'page-campuses',
+    slug: 'campuses',
+    title: 'Campuses Network',
+    subtitle: '87+ high-standard institutions across North, Central, and South regions.',
+    badge: 'Nationwide Footprint',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Explore Bahria Foundation Colleges and Schools across Islamabad, Punjab, Sindh, KP, AJK, and Balochistan.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'cp-b1',
+        type: 'heading',
+        title: 'Spanning Every Province of Pakistan',
+        subtitle: 'Quality education accessible to students in metropolises and coastal regions alike.',
+        level: 'h2',
+        align: 'center',
+        badge: 'Regional Network'
+      },
+      {
+        id: 'cp-b2',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'cp-f1',
+            icon: 'Shield',
+            title: 'North Region (42 Campuses)',
+            description: 'Islamabad, Rawalpindi, Peshawar, Abbottabad, Gilgit, Muzaffarabad, Gujar Khan, Wah Cantt.'
+          },
+          {
+            id: 'cp-f2',
+            icon: 'Award',
+            title: 'Centre Region (26 Campuses)',
+            description: 'Lahore, Faisalabad, Multan, Sialkot, Gujranwala, Bahawalpur, Sargodha, Gujrat, Sahiwal.'
+          },
+          {
+            id: 'cp-f3',
+            icon: 'Anchor',
+            title: 'South Region (19 Campuses)',
+            description: 'Karachi, Hyderabad, Ormara, Gwadar, Pasni, Sukkur, Larkana, Nawabshah, Badin.'
+          }
+        ]
+      },
+      {
+        id: 'cp-b3',
+        type: 'callout',
+        calloutType: 'gold',
+        content: 'All colleges share standardized curriculum pacing, uniform mid-year and final assessments, and centralized quality audits by the Directorate of BEATS.'
+      },
+      {
+        id: 'cp-b4',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'cp-btn1',
+            label: 'Interactive Campus Directory',
+            url: '/campuses',
+            variant: 'gold'
+          },
+          {
+            id: 'cp-btn2',
+            label: 'Regional Office Contacts',
+            url: '/contact',
+            variant: 'outline'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 7. Scholarships & Financial Aid
+  {
+    id: 'page-scholarship',
+    slug: 'scholarship',
+    title: 'Scholarship & Aid',
+    subtitle: 'Empowering bright and deserving students through merit rewards and welfare concessions.',
+    badge: 'Financial Assistance',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-01-at-6.38.24-PM-768x576.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Learn about CNS position scholarships, Naval ward fee concessions, and need-based financial aid.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'sc-b1',
+        type: 'heading',
+        title: 'Nurturing Talent Without Financial Barriers',
+        subtitle: 'Comprehensive financial support programs funded by Pakistan Navy Bahria Foundation.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Merit & Need Aid'
+      },
+      {
+        id: 'sc-b2',
+        type: 'text',
+        content: 'Bahria Foundation firmly upholds the principle that financial constraint must never impede an industrious student from achieving their potential. We operate a multi-faceted assistance framework recognizing academic brilliance and supporting underprivileged families.'
+      },
+      {
+        id: 'sc-b3',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'sc-f1',
+            icon: 'Award',
+            title: 'CNS Position Scholarships',
+            description: 'Cash prizes and full tuition fee waivers awarded to Federal & Regional BISE position holders.'
+          },
+          {
+            id: 'sc-f2',
+            icon: 'Shield',
+            title: 'Shuhada & Naval Concessions',
+            description: 'Dedicated fee remissions for children of martyred, serving, and retired Pakistan Navy personnel.'
+          },
+          {
+            id: 'sc-f3',
+            icon: 'Users',
+            title: 'Need-Based Welfare Grants',
+            description: 'Discretionary tuition support assessed by campus scholarship committees for deserving students.'
+          }
+        ]
+      },
+      {
+        id: 'sc-b4',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'sc-btn1',
+            label: 'Apply for Admission & Aid',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'sc-btn2',
+            label: 'Contact Scholarship Desk',
+            url: '/contact',
+            variant: 'primary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 8. Alumni Network
+  {
+    id: 'page-alumni',
+    slug: 'alumni',
+    title: 'Alumni Network',
+    subtitle: 'Connecting thousands of BFC graduates serving with honor across Pakistan and worldwide.',
+    badge: 'Distinguished Alumni',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Celebrate the accomplishments of Bahria Foundation alumni and join our global graduate directory.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'al-b1',
+        type: 'heading',
+        title: 'Proud Custodians of Our Naval Ethos',
+        subtitle: 'Graduates leading in the Armed Forces, Medicine, Engineering, Civil Services, and Tech.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Alumni Heritage'
+      },
+      {
+        id: 'al-b2',
+        type: 'text',
+        content: 'Since our establishment in 1998, tens of thousands of young men and women have graduated from Bahria Foundation Colleges. Our alumni serve with valor as Commissioned Officers in Pakistan Navy, Army, and Air Force, as renowned physicians, corporate leaders, and scholars.'
+      },
+      {
+        id: 'al-b3',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'al-f1',
+            icon: 'Anchor',
+            title: 'Armed Forces Cadets',
+            description: 'Hundreds of alumni inducted into Pakistan Naval Academy, PMA Kakul, and PAF Risalpur.'
+          },
+          {
+            id: 'al-f2',
+            icon: 'Award',
+            title: 'Top Universities',
+            description: 'Graduates pursuing higher degrees at NUST, GIKI, King Edward, AKU, and Oxford.'
+          },
+          {
+            id: 'al-f3',
+            icon: 'Users',
+            title: 'Global Chapters',
+            description: 'Active alumni networks across United Kingdom, North America, UAE, and Australia.'
+          }
+        ]
+      },
+      {
+        id: 'al-b4',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'al-btn1',
+            label: 'Register in Alumni Directory',
+            url: '/alumni',
+            variant: 'gold'
+          },
+          {
+            id: 'al-btn2',
+            label: 'Contact Alumni Secretariat',
+            url: '/contact',
+            variant: 'primary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 9. Contact & Directorate
+  {
+    id: 'page-contact',
+    slug: 'contact',
+    title: 'Contact Directorate',
+    subtitle: 'Head Office Islamabad & Regional Directorates in Lahore and Karachi.',
+    badge: 'Official Secretariat',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg',
+    published: true,
+    isCorePage: true,
+    useCustomLayout: false,
+    metaDescription: 'Contact addresses, phone helplines, emails, and office timings of BEATS Directorates.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'ct-b1',
+        type: 'heading',
+        title: 'Directorate Secretariat & Regional Offices',
+        subtitle: 'Connect directly with admissions, examinations, and administrative directorates.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Get In Touch'
+      },
+      {
+        id: 'ct-b2',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'ct-f1',
+            icon: 'Shield',
+            title: 'Head Office Islamabad',
+            description: 'Japan Road, Near Ibadat University, Sihala, Islamabad. Tel: +92-51-8153585'
+          },
+          {
+            id: 'ct-f2',
+            icon: 'Award',
+            title: 'Centre Directorate Lahore',
+            description: 'Naval Complex Askari-1, Near Walton Airport, Gulberg-III, Lahore. Tel: +92-42-5889415'
+          },
+          {
+            id: 'ct-f3',
+            icon: 'Anchor',
+            title: 'South Directorate Karachi',
+            description: '2nd Floor, Bahria Complex-I, M.T. Khan Road, Karachi. Tel: +92-21-35610364'
+          }
+        ]
+      },
+      {
+        id: 'ct-b3',
+        type: 'accordion',
+        faqItems: [
+          {
+            id: 'ct-faq1',
+            question: 'What are the official working hours?',
+            answer: 'All Regional Directorates and the Head Office operate Monday through Friday from 08:00 AM to 04:00 PM.'
+          },
+          {
+            id: 'ct-faq2',
+            question: 'How can I verify educational certificates issued by BEATS?',
+            answer: 'Verification applications can be submitted to the Examination Wing at Head Office Islamabad or through the regional directorate.'
+          }
+        ]
+      },
+      {
+        id: 'ct-b4',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'ct-btn1',
+            label: 'Start Admission Inquiry',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'ct-btn2',
+            label: 'Locate Nearest Campus',
+            url: '/campuses',
+            variant: 'primary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 10. Maritime Ethos & Naval Heritage (Custom Page)
+  {
+    id: 'page-maritime-heritage',
+    slug: 'maritime-heritage',
+    title: 'Maritime Ethos & Naval Heritage',
+    subtitle: 'Nurturing patriotism, physical resilience, and moral rectitude under the aegis of Pakistan Navy.',
+    badge: 'Institutional Ethos',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2024/11/WhatsApp-Image-2024-11-19-at-12.14.46-PM-768x512.jpeg',
+    published: true,
+    isCorePage: false,
+    useCustomLayout: true,
+    metaDescription: 'Discover how Bahria Foundation Colleges blend disciplined naval traditions with modern academic excellence.',
+    createdAt: '2025-01-01',
+    updatedAt: '2025-02-15',
+    blocks: [
+      {
+        id: 'b1',
+        type: 'heading',
+        title: 'Maritime Discipline & Character Development',
+        subtitle: 'Inspiring young minds with the valor, discipline, and selfless devotion of Pakistan Navy.',
+        level: 'h2',
+        align: 'center',
+        badge: 'Honor & Excellence'
+      },
+      {
+        id: 'b2',
+        type: 'text',
+        content: 'Bahria Education and Training System (BEATS) instills a distinct sense of pride, self-confidence, and maritime consciousness in every student. From daily morning parades and flag-hoisting ceremonies to inter-house regattas and swimming programs, students learn that leadership begins with humility, discipline, and brotherhood.'
+      },
+      {
+        id: 'b3',
+        type: 'callout',
+        calloutType: 'quote',
+        content: 'Character building is not a chapter in a textbook; it is the living culture that echoes through our parade grounds, classrooms, and community service initiatives across all 87+ campuses.',
+        quoteAuthor: 'Vice Admiral (R) Muhammad Amjad Khan, Managing Director Bahria Foundation'
+      },
+      {
+        id: 'b4',
+        type: 'features',
+        featuresColumns: 3,
+        features: [
+          {
+            id: 'f1',
+            icon: 'Anchor',
+            title: 'Naval Cadets & Drill',
+            description: 'Structured marching drills, assembly inspections, and student council leadership.'
+          },
+          {
+            id: 'f2',
+            icon: 'Shield',
+            title: 'Uncompromising Integrity',
+            description: 'Strict adherence to anti-cheating honor codes, mutual respect, and ethical conduct.'
+          },
+          {
+            id: 'f3',
+            icon: 'Award',
+            title: 'Armed Forces Pathway',
+            description: 'Guidance and physical preparation for admissions into Naval Academy and Armed Forces colleges.'
+          }
+        ]
+      },
+      {
+        id: 'b5',
+        type: 'video',
+        videoTitle: 'Naval Parades and Student Life at Bahria Foundation',
+        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+        videoCaption: 'Watch highlights from our nationwide campuses showcasing sports, drills, and academic assemblies.'
+      },
+      {
+        id: 'b6',
+        type: 'buttons',
+        buttons: [
+          {
+            id: 'btn1',
+            label: 'Apply for Admission 2025-26',
+            url: '/admission',
+            variant: 'gold'
+          },
+          {
+            id: 'btn2',
+            label: 'Explore Nationwide Campuses',
+            url: '/campuses',
+            variant: 'primary'
+          }
+        ]
+      }
+    ]
+  },
+
+  // 11. STEM Innovation & Digital Labs (Custom Page)
+  {
+    id: 'page-stem-innovation',
+    slug: 'stem-innovation',
+    title: 'STEM Innovation & Digital Labs',
+    subtitle: 'State-of-the-art computer science, robotics, and experimental physics laboratories across BEATS.',
+    badge: 'Technological Excellence',
+    bannerImage: 'https://beats.com.pk/wp-content/uploads/2023/05/bfeis-5.webp',
+    published: true,
+    isCorePage: false,
+    useCustomLayout: true,
+    metaDescription: 'Explore the modern STEM laboratories, IT infrastructure, and digital classrooms at Bahria Foundation Colleges.',
+    createdAt: '2025-01-15',
+    updatedAt: '2025-02-20',
+    blocks: [
+      {
+        id: 'stem-b1',
+        type: 'heading',
+        title: 'Modern Science & ICT Infrastructure',
+        subtitle: 'Empowering students to transition from theoretical textbooks to practical scientific discoveries.',
+        level: 'h2',
+        align: 'left',
+        badge: 'Hands-on Learning'
+      },
+      {
+        id: 'stem-b2',
+        type: 'text',
+        content: 'All Bahria Foundation Colleges feature fully accredited science laboratories for Physics, Chemistry, and Biology, alongside high-speed multimedia ICT suites. Under the guidance of certified instructors, students conduct laboratory experiments aligned with FBISE and Cambridge O-Level curricula.'
+      },
+      {
+        id: 'stem-b3',
+        type: 'image',
+        imageUrl: 'https://beats.com.pk/wp-content/uploads/2023/05/bfeis-5.webp',
+        imageAlt: 'Modern Computer and Science Laboratory',
+        caption: 'Students engaged in practical experimental learning inside our high-tech laboratories.',
+        imageWidth: 'wide'
+      },
+      {
+        id: 'stem-b4',
+        type: 'accordion',
+        faqItems: [
+          {
+            id: 'faq1',
+            question: 'Are laboratories equipped according to Federal Board (FBISE) standards?',
+            answer: 'Yes, all science and IT laboratories undergo rigorous annual academic audits by BEATS Directorates to maintain strict compliance with BISE and Cambridge standards.'
+          },
+          {
+            id: 'faq2',
+            question: 'How early do students start using computer facilities?',
+            answer: 'Computer literacy and algorithmic thinking begin in Primary grades, transitioning into Python programming and office productivity in Middle school.'
+          }
+        ]
+      }
+    ]
+  }
+];
 
 export const DEFAULT_MARQUEE_ITEMS: MarqueeItem[] = [
   {
@@ -320,6 +1442,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   tagline: 'A Prestigious Education Network Under Bahria Foundation (Pakistan Navy)',
   logoUrl: 'https://beats.com.pk/wp-content/uploads/2023/04/beats-bahria-logo-300x112-1.webp',
   faviconUrl: 'https://beats.com.pk/wp-content/uploads/2023/04/cropped-beats-fav-32x32.png',
+  mediaUploadPath: '/media',
   
   navyThemeShade: 'deep-navy',
   fontSizeScale: 'normal',
@@ -440,5 +1563,29 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   footerDescription: 'Bahria Education & Training System (BEATS) operates 87+ high-standard schools and colleges across Pakistan under Bahria Foundation, Pakistan Navy.',
   footerHelpline: '+92 51 8356193',
   footerEmail: 'info@beats.com.pk',
-  footerAddress: 'Bahria Foundation, Head Office, H-8/4, Islamabad, Pakistan'
+  footerAddress: 'Bahria Foundation, Head Office, H-8/4, Islamabad, Pakistan',
+
+  // Navigation Menu Customization
+  menuItems: DEFAULT_MENU_ITEMS,
+
+  // Custom Pages Created via Page Designer
+  customPages: DEFAULT_CUSTOM_PAGES,
+
+  // Tombstones for explicitly deleted items
+  deletedPageIds: [],
+  deletedMenuItemIds: [],
+
+  // Social Media Links
+  socialFacebook: 'https://facebook.com/BahriaFoundationOfficial',
+  socialTwitter: 'https://twitter.com/BahriaFdn',
+  socialYoutube: 'https://youtube.com/@BahriaFoundation',
+  socialLinkedin: 'https://linkedin.com/company/bahria-foundation',
+  socialInstagram: 'https://instagram.com/bahriafoundation',
+
+  // Specific Page Settings & Policies
+  admissionNotes: 'All admissions are subject to verification of original birth/B-Form certificates and success in regional placement assessments.',
+  admissionBankInfo: 'Designated Fee Collection: Askari Bank Ltd & Habib Bank Ltd (HBL) designated branches nationwide.',
+  campusLifeHouseColors: 'Jinnah (Crimson Red), Iqbal (Emerald Green), Tippu (Navy Blue), Zafar (Golden Yellow)',
+  scholarshipMaxPerStudent: 'Full Tuition Waiver + Rs. 15,000 Book & Research Allowance for qualifying BS/MS scholars.',
+  contactGoogleMapQuery: 'Bahria Foundation Head Office Islamabad'
 };
